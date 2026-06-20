@@ -1,15 +1,12 @@
 name: Build & Deploy (Hostinger)
 
-# En cada push a main: recompila el proyecto y deja el resultado YA construido
-# dentro de public_html, que es la carpeta que sirve la conexion git de Hostinger.
-# (Hostinger no compila: solo sirve los archivos estaticos que encuentra.)
+# En cada push a main: compila el proyecto y publica el resultado YA construido
+# en la rama `production` (archivos en la raiz). Hostinger se conecta a esa rama
+# y clona su contenido en public_html, sirviendo el sitio estatico tal cual.
+# (Hostinger no compila: solo sirve archivos.)
 on:
   push:
     branches: [main]
-    # Evita un bucle: los commits que solo tocan public_html (los que hace este
-    # propio workflow) no vuelven a dispararlo.
-    paths-ignore:
-      - 'public_html/**'
   workflow_dispatch:
 
 permissions:
@@ -20,7 +17,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
+  build-and-publish:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -38,14 +35,13 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Commit public_html
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add public_html
-          if git diff --staged --quiet; then
-            echo "public_html sin cambios"
-          else
-            git commit -m "build: actualizar public_html [skip ci]"
-            git push
-          fi
+      - name: Publish dist to production branch
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: production
+          publish_dir: ./dist
+          # La rama production contiene SOLO los archivos construidos en su raiz.
+          force_orphan: true
+          user_name: github-actions[bot]
+          user_email: github-actions[bot]@users.noreply.github.com

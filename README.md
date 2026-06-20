@@ -24,16 +24,26 @@ src/styles.css        Estilos (copia fiel del diseño original)
 
 ## Ramas
 
-- **main** — producción. Cada push dispara el deploy automático.
+- **main** — código fuente de producción. Cada push dispara el build.
 - **develop** — desarrollo. Se trabaja aquí y se fusiona a `main` para publicar.
+- **production** — generada por el CI. Contiene **solo el sitio ya compilado**
+  (index.html + assets en la raíz). **No se edita a mano.**
 
-## Despliegue automático
+## Despliegue automático (Hostinger)
 
-El workflow `.github/workflows/deploy.yml` compila y publica el sitio en
-**GitHub Pages** en cada push a `main`. Para activarlo, en GitHub:
+Hostinger sirve archivos estáticos: **no compila el proyecto**. Por eso el CI
+construye el sitio y publica el resultado en la rama `production`, que es la que
+Hostinger clona en `public_html`.
 
-1. **Settings → Pages → Build and deployment → Source: GitHub Actions**.
-2. Haz push a `main` (o fusiona `develop` → `main`).
+Flujo: `push a main` → GitHub Actions compila → actualiza la rama `production`
+→ Hostinger despliega esa rama en `public_html`.
 
-El `base` de Vite está configurado como relativo (`./`), por lo que el sitio
-funciona tanto en un dominio raíz como en una ruta de proyecto de GitHub Pages.
+### Configuración en Hostinger (una sola vez)
+
+1. hPanel → **Avanzado → Git** → conecta este repositorio.
+2. **Branch:** `production`  ·  **Directorio de despliegue:** `public_html`.
+3. (Opcional) Activa **Auto-deployment** y copia la *Webhook URL* en
+   GitHub → **Settings → Webhooks** para que Hostinger actualice solo en cada push.
+
+El `base` de Vite es relativo (`./`), por lo que los assets cargan bien servidos
+desde la raíz del dominio.
