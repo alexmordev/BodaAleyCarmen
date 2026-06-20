@@ -1,5 +1,6 @@
 // === Wedding components ===
 import React, { useState, useEffect, useRef, useMemo, Fragment } from 'react'
+import gatoUrl from './assets/images/gato.jfif'
 
 // --- Logo / Monogram ---
 function Monogram({ size = 22, style = "serif", className = "" }) {
@@ -724,7 +725,7 @@ function CatWalker() {
   }, []);
   return (
     <div className={`cat-walker ${visible ? "visible" : ""}`} style={{ transform: `translateX(${x}px)` }}>
-      <CatWalkSvg size={40} />
+      <img src={gatoUrl} alt="Mishka caminando" />
     </div>
   );
 }
