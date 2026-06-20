@@ -31,8 +31,13 @@ npm run preview  # previsualizar el build
 3. **`base` de Vite es relativo (`./`)** para que los assets carguen servidos desde
    la raíz del dominio. No cambiar a absoluto sin motivo.
 4. El **gato que cruza la pantalla al hacer scroll** (componente `CatWalker`, fijo
-   abajo) usa `src/assets/images/gato.jfif`. Para cambiarlo, reemplazar ese archivo
-   o el import en `App.jsx`.
+   abajo) usa `src/assets/images/gato.png` (silueta con fondo transparente).
+5. **Pipeline de imágenes** (`scripts/process-assets.mjs`, usa `sharp`): toma las
+   fotos crudas de `dist/assets/Photos-3-001/` y el icono del gato, les quita peso /
+   fondo y las escribe en `src/assets/images/` (hero, `gallery/g1..g7`, `gato.png`).
+   Las fotos marcadas con `fav` en el nombre son las favoritas y tienen prioridad.
+   El recorte usa `fit: cover` con `strategy.attention` para no cortar caras.
+   Las salidas se commitean; `sharp` NO se usa en el build (solo es devDependency).
 
 ## Ramas
 

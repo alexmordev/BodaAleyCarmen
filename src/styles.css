@@ -127,6 +127,11 @@ button { font: inherit; cursor: pointer; border: none; background: none; color: 
   font-family: var(--mono); font-size: 11px; color: var(--ink-mute);
   letter-spacing: 0.15em; text-transform: uppercase;
 }
+.hero-img-wrap img {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+}
 .hero-img-tag {
   position: absolute; bottom: 16px; left: 16px;
   font-family: var(--mono); font-size: 10px; letter-spacing: 0.2em;
@@ -191,6 +196,13 @@ button { font: inherit; cursor: pointer; border: none; background: none; color: 
 .gal:hover .gal-cap { opacity: 1; transform: translateY(0); }
 .gal:hover::before { transform: scale(1.04); }
 .gal::before { transition: transform 0.6s ease; }
+.gal img {
+  position: absolute; inset: 0; z-index: 1;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s ease;
+}
+.gal:hover img { transform: scale(1.04); }
 
 .gal-1 { grid-column: span 7; aspect-ratio: 4 / 3; }
 .gal-2 { grid-column: span 5; aspect-ratio: 3 / 4; }

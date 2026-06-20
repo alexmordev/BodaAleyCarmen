@@ -1,6 +1,16 @@
 // === Wedding components ===
 import React, { useState, useEffect, useRef, useMemo, Fragment } from 'react'
-import gatoUrl from './assets/images/gato.jfif'
+import gatoUrl from './assets/images/gato.png'
+import heroImg from './assets/images/hero.jpg'
+import g1 from './assets/images/gallery/g1.jpg'
+import g2 from './assets/images/gallery/g2.jpg'
+import g3 from './assets/images/gallery/g3.jpg'
+import g4 from './assets/images/gallery/g4.jpg'
+import g5 from './assets/images/gallery/g5.jpg'
+import g6 from './assets/images/gallery/g6.jpg'
+import g7 from './assets/images/gallery/g7.jpg'
+
+const galleryImgs = [g1, g2, g3, g4, g5, g6, g7]
 
 // --- Logo / Monogram ---
 function Monogram({ size = 22, style = "serif", className = "" }) {
@@ -139,7 +149,7 @@ function Hero({ logoStyle }) {
       </div>
       <div className="hero-right">
         <div className="hero-img-wrap">
-          <div className="placeholder"><span>Foto principal · Pedida</span></div>
+          <img src={heroImg} alt="Alejandro y Carmen" />
           <div className="hero-img-tag">VALLE DE BRAVO · 2026</div>
         </div>
       </div>
@@ -175,6 +185,7 @@ function Gallery() {
         <div className="gallery">
           {photos.map((p, i) => (
             <div key={i} className={`gal gal-${i + 1}`}>
+              <img src={galleryImgs[i]} alt={p.cap} loading="lazy" />
               <div className="gal-tag">{p.tag}{p.loc ? ` · ${p.loc}` : ""}</div>
               <div className="gal-cap">{p.cap}</div>
               {i === 4 && (
