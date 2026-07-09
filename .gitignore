@@ -13,6 +13,13 @@ npm-debug.log*
 Thumbs.db
 .vscode/
 .idea/
+.obsidian/
+
+# Herramientas locales / notas (no van al repo)
+.agents/
+Spec/
+skills-lock.json
+IMAGENES-PENDIENTES.md
 
 # Env
 .env

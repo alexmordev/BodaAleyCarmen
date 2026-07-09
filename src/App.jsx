@@ -1,808 +1,504 @@
-// === Wedding components ===
-import React, { useState, useEffect, useRef, useMemo, Fragment } from 'react'
-import gatoUrl from './assets/images/gato.png'
-import heroImg from './assets/images/hero.jpg'
-import g1 from './assets/images/gallery/g1.jpg'
-import g2 from './assets/images/gallery/g2.jpg'
-import g3 from './assets/images/gallery/g3.jpg'
-import g4 from './assets/images/gallery/g4.jpg'
-import g5 from './assets/images/gallery/g5.jpg'
-import g6 from './assets/images/gallery/g6.jpg'
-import g7 from './assets/images/gallery/g7.jpg'
+// === Wedding site — réplica fiel del diseño "Alejandro & Carmen" (Claude Design) ===
+import React, { useEffect, useRef, useState } from 'react'
+import imgSillon from './assets/images/nosotros-sillon.jpg'
+import imgCena from './assets/images/nosotros-cena.jpg'
+import imgPropuesta from './assets/images/propuesta.jpg'
+import imgAnillo from './assets/images/anillo-flores.jpg'
+import imgHacienda from './assets/images/hacienda.webp'
 
-const galleryImgs = [g1, g2, g3, g4, g5, g6, g7]
+const WEDDING_TARGET = new Date('2026-11-07T17:30:00-06:00').getTime()
 
-// --- Logo / Monogram ---
-function Monogram({ size = 22, style = "serif", className = "" }) {
-  return (
-    <span className={`logo-wrap ${className}`} data-style={style} style={{ fontSize: size }}>
-      A<span className="amp">&</span>C
-    </span>
-  );
+// Nombre del invitado — el backend puede inyectarlo con window.__INVITADO__,
+// o llega por la URL (?invitado=Nombre). Fallback: "Familia González".
+function getGuestName() {
+  const injected = typeof window !== 'undefined' && window.__INVITADO__
+  const fromUrl = typeof window !== 'undefined'
+    ? new URLSearchParams(window.location.search).get('invitado')
+    : null
+  return (injected && String(injected).trim()) || (fromUrl && fromUrl.trim()) || 'Familia González'
 }
 
-// --- Cat SVG silhouettes ---
-const CatSvg = ({ size = 28, color = "#1A1714" }) => (
-  <svg width={size} height={size * 0.68} viewBox="0 0 100 68" fill="none">
-    {/* sitting cat silhouette */}
-    <path d="M22 22 L18 6 L28 16 L40 14 Q50 13 60 14 L72 16 L82 6 L78 22 Q88 30 88 44 Q88 58 78 60 L22 60 Q12 58 12 44 Q12 30 22 22 Z" fill={color}/>
-    <circle cx="38" cy="32" r="2" fill="#FAF8F5"/>
-    <circle cx="62" cy="32" r="2" fill="#FAF8F5"/>
-  </svg>
-);
+// --- Sobre / Opener (efecto al abrir la página) ---
+function Opener() {
+  const [guest] = useState(getGuestName)
+  const [go, setGo] = useState(false)      // solapa/carta en movimiento
+  const [opened, setOpened] = useState(false) // opener desvanecido
+  const [gone, setGone] = useState(false)  // opener retirado del DOM
 
-const CatWalkSvg = ({ size = 36 }) => (
-  <svg width={size * 1.6} height={size} viewBox="0 0 160 100" fill="none">
-    {/* walking cat */}
-    <path d="M20 70 Q20 50 40 48 L100 48 Q130 48 135 60 L142 50 L140 70 L150 75 L138 78 Q132 85 120 85 L40 85 Q20 85 20 70 Z" fill="#1A1714"/>
-    <path d="M20 70 L8 76 L12 84 L22 80" fill="#1A1714"/>
-    <path d="M132 48 L130 32 L136 38 L142 30 L142 46" fill="#1A1714"/>
-    <path d="M148 30 L150 18 L154 28 L160 24 L158 40" fill="#1A1714"/>
-    <circle cx="148" cy="58" r="1.5" fill="#FAF8F5"/>
-    <rect x="35" y="85" width="3" height="10" fill="#1A1714"/>
-    <rect x="55" y="85" width="3" height="10" fill="#1A1714"/>
-    <rect x="95" y="85" width="3" height="10" fill="#1A1714"/>
-    <rect x="115" y="85" width="3" height="10" fill="#1A1714"/>
-  </svg>
-);
-
-const PawSvg = ({ size = 16, color = "#CD96D6" }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
-    <ellipse cx="12" cy="16" rx="5" ry="4"/>
-    <ellipse cx="6" cy="10" rx="2" ry="2.5"/>
-    <ellipse cx="18" cy="10" rx="2" ry="2.5"/>
-    <ellipse cx="9" cy="6" rx="1.7" ry="2.2"/>
-    <ellipse cx="15" cy="6" rx="1.7" ry="2.2"/>
-  </svg>
-);
-
-// --- Countdown ---
-function Countdown({ target }) {
-  const [now, setNow] = useState(Date.now());
   useEffect(() => {
-    const i = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(i);
-  }, []);
-  const diff = Math.max(0, target - now);
-  const d = Math.floor(diff / 86400000);
-  const h = Math.floor((diff % 86400000) / 3600000);
-  const m = Math.floor((diff % 3600000) / 60000);
-  const s = Math.floor((diff % 60000) / 1000);
-  const units = [
-    { n: d, l: "Días" },
-    { n: h, l: "Horas" },
-    { n: m, l: "Min" },
-    { n: s, l: "Seg" },
-  ];
+    document.body.classList.add('locked')
+    return () => document.body.classList.remove('locked')
+  }, [])
+
+  const open = () => {
+    if (go) return
+    setGo(true)
+    setTimeout(() => {
+      setOpened(true)
+      document.body.classList.remove('locked')
+    }, 2500)
+    setTimeout(() => setGone(true), 3400)
+  }
+
+  if (gone) return null
+
   return (
-    <div className="countdown">
-      {units.map((u, i) => (
-        <Fragment key={u.l}>
-          <div className="countdown-unit">
-            <div className="countdown-num">{String(u.n).padStart(2, "0")}</div>
-            <div className="countdown-label">{u.l}</div>
+    <div className={`opener ${opened ? 'opened' : ''}`}>
+      <div className="halo"></div>
+      <div className="op-kicker">Estás invitad@ · 07 · XI · 2026</div>
+      <div className="env-stage">
+        <div
+          className={`env ${go ? 'go' : ''}`}
+          role="button"
+          tabIndex={0}
+          aria-label="Abrir invitación"
+          onClick={open}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open() } }}
+        >
+          <div className="env-body"></div>
+          <div className="letter">
+            <div className="date">Sábado 7 de noviembre 2026</div>
+            <h3>Alejandro <em>&amp;</em> Carmen</h3>
+            <p className="hi">Con mucho cariño,<br /><b>{guest}</b>,<br />queremos que estés ahí.</p>
           </div>
-          {i < units.length - 1 && <span className="countdown-sep">·</span>}
-        </Fragment>
-      ))}
+          <div className="env-front"></div>
+          <div className="env-addr">
+            <div className="to">Para</div>
+            <div className="who">{guest}</div>
+          </div>
+          <div className="env-flap"></div>
+          <div className="seal"><b>A<em>&amp;</em>C</b></div>
+        </div>
+        <div className="op-hint">
+          <span className="tap">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 11V6a2 2 0 0 1 4 0v5" /><path d="M13 8a2 2 0 0 1 4 0v6a6 6 0 0 1-6 6h-1a5 5 0 0 1-4-2l-3-4 1.5-1.2 2.5 1.4V7a2 2 0 0 1 4 0v4" /></svg>
+          </span>
+          <span>Toca para abrir tu invitación</span>
+        </div>
+      </div>
     </div>
-  );
+  )
+}
+
+function PlayIcon() {
+  return (
+    <svg width="9" height="10" viewBox="0 0 9 10" fill="currentColor"><path d="M0 0l9 5-9 5z" /></svg>
+  )
+}
+
+function Song({ href, title, subtitle, style }) {
+  return (
+    <a className="song reveal" href={href} target="_blank" rel="noopener" style={style}>
+      <span className="play"><PlayIcon /></span>
+      <span className="meta"><b>{title}</b><small>{subtitle}</small></span>
+      <span className="eq">
+        <i style={{ height: 5 }}></i><i style={{ height: 10 }}></i><i style={{ height: 7 }}></i><i style={{ height: 9 }}></i>
+      </span>
+    </a>
+  )
 }
 
 // --- Nav ---
-function Nav({ logoStyle }) {
-  const [scrolled, setScrolled] = useState(false);
+function Nav() {
+  const [scrolled, setScrolled] = useState(false)
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 40);
-    window.addEventListener("scroll", onScroll);
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-  const links = [
-    ["#galeria", "Galería"],
-    ["#historia", "Historia"],
-    ["#cuando", "Detalles"],
-    ["#itinerario", "Itinerario"],
-    ["#hoteles", "Hoteles"],
-    ["#regalos", "Regalos"],
-    ["#rsvp", "RSVP"],
-  ];
+    const onScroll = () => setScrolled(window.scrollY > 20)
+    window.addEventListener('scroll', onScroll, { passive: true })
+    onScroll()
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
   return (
-    <nav className={`nav ${scrolled ? "scrolled" : ""}`}>
-      <a href="#top" aria-label="Inicio">
-        <Monogram size={22} style={logoStyle} />
-      </a>
-      <div className="nav-links">
-        {links.map(([h, l]) => (
-          <a key={h} href={h}>{l}</a>
+    <nav className={`nav ${scrolled ? 'scrolled' : ''}`}>
+      <div className="logo">A<span className="amp">&amp;</span>C</div>
+      <button className="menu" aria-label="Menú"><i></i><i></i><i></i></button>
+    </nav>
+  )
+}
+
+// --- Countdown ---
+function Countdown() {
+  const [now, setNow] = useState(Date.now())
+  useEffect(() => {
+    const i = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(i)
+  }, [])
+  let d = Math.max(0, WEDDING_TARGET - now)
+  const days = Math.floor(d / 86400000); d -= days * 86400000
+  const h = Math.floor(d / 3600000); d -= h * 3600000
+  const m = Math.floor(d / 60000); d -= m * 60000
+  const s = Math.floor(d / 1000)
+  return (
+    <div className="count reveal">
+      <div className="u"><b>{days}</b><small>Días</small></div>
+      <div className="u"><b>{String(h).padStart(2, '0')}</b><small>Horas</small></div>
+      <div className="u"><b>{String(m).padStart(2, '0')}</b><small>Min</small></div>
+      <div className="u"><b>{String(s).padStart(2, '0')}</b><small>Seg</small></div>
+    </div>
+  )
+}
+
+// --- Hero (Portada) ---
+function Hero() {
+  return (
+    <section className="hero" data-screen-label="Portada">
+      <div className="eyebrow reveal">Sábado · 7 de noviembre 2026 · 17:30</div>
+      <h1 className="reveal">Alejandro<br /><em>&amp;</em> Carmen</h1>
+      <p className="sub reveal">Nos casamos donde todo se siente en calma. Y queremos que estés ahí.</p>
+      <div className="heroimg reveal">
+        <img src={imgSillon} alt="Alejandro y Carmen" />
+      </div>
+      <Countdown />
+    </section>
+  )
+}
+
+// --- Primera cita + pedida ---
+function Night() {
+  return (
+    <section className="night" data-screen-label="Primera cita y pedida">
+      <div className="glow"></div>
+      <div className="k reveal">Cómo empezó todo</div>
+      <div className="pull reveal">Tres días<br />y un para siempre.</div>
+      <p className="lead reveal">Fue en Santa María la Ribera, todo decorado de Día de Muertos y hasta con gatitos rondando. Él llegó tarde, ella tenía trencitas, y no paramos de reír en toda la cena. El vecino todavía se queja de que nos reímos demasiado en las noches.</p>
+      <Song href="https://open.spotify.com/search/A%20Thousand%20Years%20Christina%20Perri" title="A Thousand Years" subtitle="La que suena en nosotros" />
+      <div className="imgfull reveal"><img src={imgCena} alt="Alejandro y Carmen" /></div>
+
+      <div className="divider reveal"><span>La pregunta · Valle de Bravo</span></div>
+
+      <h2 className="reveal" style={{ marginTop: 34 }}>Ninguno de los dos<br /><em>quería cenar.</em></h2>
+      <p className="lead reveal">Pero dije &ldquo;vamos a cenar&rdquo; y ella dijo que sí. Arriba estaba todo listo: la mesa, las velas, las flores, la bocina. Puse la canción, ella entró y empezó a llorar. Yo temblaba. Entonces dije las palabras que siempre soñó escuchar.</p>
+      <div className="twin reveal">
+        <img src={imgPropuesta} alt="La propuesta" />
+        <img src={imgAnillo} alt="El anillo y las lilis" />
+      </div>
+      <div className="vow reveal">
+        <blockquote>&ldquo;Con esta mano sostendré tus anhelos&hellip;&rdquo;</blockquote>
+        <div className="who">— La pregunta, palabra por palabra</div>
+      </div>
+      <Song href="https://open.spotify.com/search/The%20Story%20Brandi%20Carlile" title="The Story · Brandi Carlile" subtitle="La que también nos cuenta" />
+    </section>
+  )
+}
+
+// --- Boda ---
+function Boda() {
+  return (
+    <section className="boda" data-screen-label="Boda">
+      <div className="k reveal">La boda</div>
+      <h2 className="reveal">Ahora sí:<br /><em>nos casamos.</em></h2>
+      <p className="lead reveal">El 7 de noviembre de 2026 lo hacemos oficial, rodeados de la gente que queremos. Cena, mezcal, brindis y la fiesta que siempre soñamos.</p>
+      <div className="reggae reveal">
+        <div className="tag">Aviso de la pista</div>
+        <p className="big">Aquí solo se baila una cosa: reguetón.</p>
+        <p className="small">Ven con los tenis puestos. La fiesta no para hasta que salga el sol.</p>
+        <Song href="https://open.spotify.com/search/Compartir%20Carla%20Morrison" title="Compartir · Carla Morrison" subtitle="Antes de que se prenda todo" style={{ marginTop: 16 }} />
+      </div>
+    </section>
+  )
+}
+
+// --- Logística ---
+function Plan() {
+  const rows = [
+    ['17:30', 'Ceremonia', 'En los jardines de la hacienda'],
+    ['18:30', 'Cóctel de bienvenida', 'Mezcal, música y saludos'],
+    ['19:00', 'Cena y brindis', 'Sentados, con los que queremos'],
+    ['20:00', 'Se abre la pista', 'Ya sabes qué se baila aquí'],
+  ]
+  return (
+    <section className="plan" data-screen-label="Logística">
+      <div className="k reveal">Logística</div>
+      <h2 className="reveal">7 de noviembre,<br /><em>minuto a minuto.</em></h2>
+      <div className="plan-rows" style={{ marginTop: 24 }}>
+        {rows.map(([t, title, desc]) => (
+          <div key={t} className="row reveal">
+            <b>{t}</b>
+            <div className="d">{title}<small>{desc}</small></div>
+          </div>
         ))}
       </div>
-      <div className="nav-date">07.11.2026</div>
-    </nav>
-  );
-}
-
-// --- Hero ---
-function Hero({ logoStyle }) {
-  const target = new Date("2026-11-07T17:00:00-06:00").getTime();
-  return (
-    <section className="hero" id="top">
-      <div className="hero-left">
-        <div className="hero-meta">
-          <div className="eyebrow">Sábado<span className="dot"></span>7 nov 2026<span className="dot"></span>17:00</div>
-          <div className="serif-italic" style={{ fontSize: "20px", color: "var(--ink-soft)" }}>
-            Hacienda Esmeralda · Ciudad de México
-          </div>
-        </div>
-        <div className="hero-title">
-          <h1 className="h1">
-            Alejandro<br/>
-            <span className="amp">&</span> Carmen
-          </h1>
-        </div>
-        <div className="hero-bottom">
-          <Countdown target={target} />
-          <div style={{ textAlign: "right" }}>
-            <div className="eyebrow" style={{ marginBottom: 4 }}>Confirma asistencia</div>
-            <a href="#rsvp" className="serif-italic" style={{ fontSize: 18, color: "var(--primary-deep)", borderBottom: "1px solid var(--primary)" }}>antes del 15 de octubre →</a>
-          </div>
-        </div>
-      </div>
-      <div className="hero-right">
-        <div className="hero-img-wrap">
-          <img src={heroImg} alt="Alejandro y Carmen" />
-          <div className="hero-img-tag">VALLE DE BRAVO · 2026</div>
-        </div>
-      </div>
+      <p className="lead reveal" style={{ marginTop: 22 }}>Código de vestimenta: formal. Un consejo de corazón — trae unos tenis en la bolsa para la pista.</p>
     </section>
-  );
+  )
 }
 
-// --- Gallery ---
-function Gallery() {
-  const photos = [
-    { tag: "01", cap: "“No podíamos posar.”", loc: "Valle de Bravo" },
-    { tag: "02", cap: "Justo antes del sí.", loc: "Mirador" },
-    { tag: "03", cap: "Risa de la buena.", loc: "" },
-    { tag: "04", cap: "El anillo.", loc: "" },
-    { tag: "05", cap: "Mil años, una canción.", loc: "" },
-    { tag: "06", cap: "Inseparables.", loc: "" },
-    { tag: "07", cap: "Y el resto fue ayer.", loc: "06.11.2024" },
-  ];
+// --- El lugar ---
+function Venue() {
   return (
-    <section className="section" id="galeria">
-      <div className="shell">
-        <div className="sec-head">
-          <div>
-            <div className="sec-num">01 · La pedida</div>
-          </div>
-          <div>
-            <h2 className="h2">Un fin de semana<br/><span className="serif-italic">en Valle de Bravo.</span></h2>
-            <p className="lead" style={{ marginTop: 20 }}>
-              Siete fotos del día que decidimos no soltarnos nunca.
-            </p>
-          </div>
-        </div>
-        <div className="gallery">
-          {photos.map((p, i) => (
-            <div key={i} className={`gal gal-${i + 1}`}>
-              <img src={galleryImgs[i]} alt={p.cap} loading="lazy" />
-              <div className="gal-tag">{p.tag}{p.loc ? ` · ${p.loc}` : ""}</div>
-              <div className="gal-cap">{p.cap}</div>
-              {i === 4 && (
-                <span className="egg-cat" data-egg style={{ bottom: 18, right: 18 }}>
-                  <CatSvg size={26} color="#1A1714" />
-                </span>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
+    <section className="venue" data-screen-label="El lugar">
+      <div className="k reveal">El lugar</div>
+      <img className="reveal" src={imgHacienda} alt="Hacienda La Esmeralda" />
+      <h3 className="reveal">Hacienda La Esmeralda</h3>
+      <p className="addr reveal">Xochitepetl 422, Santa María Tepepan,<br />Xochimilco, 16020 · Ciudad de México</p>
+      <a className="maplink reveal" href="https://maps.google.com/?q=Hacienda+La+Esmeralda+Xochitepetl+422+Santa+Maria+Tepepan+Xochimilco" target="_blank" rel="noopener">Ver en el mapa</a>
     </section>
-  );
+  )
 }
 
-// --- Story ---
-function Story() {
-  return (
-    <section className="section" id="historia" style={{ background: "var(--bg-warm)" }}>
-      <div className="shell">
-        <div className="sec-head">
-          <div><div className="sec-num">02 · Nuestra historia</div></div>
-          <div>
-            <h2 className="h2">Tres días<br/><span className="serif-italic">y un para siempre.</span></h2>
-          </div>
-        </div>
-        <div className="story-grid">
-          <div className="story-text">
-            <p>
-              Nos conocimos el 6 de noviembre de 2024. Lo que iba a ser un café se convirtió
-              en una primera cita de tres días seguidos — y, sin darnos cuenta, en la única
-              cita que necesitamos. Desde entonces no hemos vuelto a soltarnos.
-            </p>
-            <p>
-              Dos años después, en Valle de Bravo, sonó <em>I love you for a thousand years</em>
-              de fondo. Intentamos posar para la foto y no pudimos: nos dio risa, como siempre.
-              Entre carcajadas — porque entre nosotros casi todo es un chiste — apareció el anillo.
-            </p>
-            <p>
-              Ahora queremos celebrarlo con ustedes. Sin guion, sin pose, con la misma risa
-              de siempre.
-            </p>
-          </div>
-          <div className="story-aside">
-            <div className="story-fact">
-              <div className="label">Primer día</div>
-              <div className="val">06 · 11 · <span className="accent">2024</span></div>
-            </div>
-            <div className="story-fact">
-              <div className="label">Pedida</div>
-              <div className="val">Valle de Bravo<br/><span className="accent serif-italic">a mil años de distancia</span></div>
-            </div>
-            <div className="story-fact">
-              <div className="label">Nuestra canción</div>
-              <div className="val serif-italic">A Thousand Years</div>
-            </div>
-            <div className="story-fact">
-              <div className="label">Tercer integrante</div>
-              <div className="val serif-italic">Mishka <span style={{ display: "inline-block", verticalAlign: "middle", marginLeft: 6 }}><PawSvg size={16}/></span></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// --- When/Where ---
-function WhenWhere() {
-  const mapSrc = "https://www.openstreetmap.org/export/embed.html?bbox=-99.1180%2C19.2630%2C-99.0980%2C19.2780&layer=mapnik&marker=19.2705%2C-99.1080";
-  return (
-    <section className="section" id="cuando">
-      <div className="shell">
-        <div className="sec-head">
-          <div><div className="sec-num">03 · Cuándo y dónde</div></div>
-          <div>
-            <h2 className="h2">Hacienda<br/><span className="serif-italic">Esmeralda.</span></h2>
-            <p className="lead" style={{ marginTop: 20 }}>
-              Una sola sede para la ceremonia religiosa, la civil y la fiesta. Te recomendamos llegar 30 minutos antes.
-            </p>
-          </div>
-        </div>
-        <div className="venue-grid">
-          <div className="venue-info">
-            <div className="venue-row">
-              <div className="k">Fecha</div>
-              <div className="v">Sábado 7 de noviembre, 2026<small>Llegada sugerida: 16:30 hrs</small></div>
-            </div>
-            <div className="venue-row">
-              <div className="k">Ceremonia</div>
-              <div className="v">Religiosa & Civil<small>17:00 — 18:30 hrs · misma sede</small></div>
-            </div>
-            <div className="venue-row">
-              <div className="k">Recepción</div>
-              <div className="v">Cóctel, cena y baile<small>19:00 — 03:00 hrs</small></div>
-            </div>
-            <div className="venue-row">
-              <div className="k">Dirección</div>
-              <div className="v">Hacienda Esmeralda<small>Xochitepetl 422, Santa María Tepepan,<br/>Xochimilco, 16020 CDMX</small></div>
-            </div>
-            <div className="venue-actions">
-              <a className="btn btn-primary" href="https://maps.google.com/?q=Xochitepetl+422+Santa+Maria+Tepepan+Xochimilco" target="_blank" rel="noopener">
-                Cómo llegar →
-              </a>
-              <a className="btn btn-ghost" href="https://haciendalaesmeralda.mx/" target="_blank" rel="noopener">
-                Ver el lugar
-              </a>
-            </div>
-          </div>
-          <div className="map-wrap">
-            <iframe src={mapSrc} title="Mapa Hacienda Esmeralda" loading="lazy"></iframe>
-            <div className="map-pin"><div className="dot"></div><div className="stick"></div></div>
-            <div className="map-overlay">
-              <div className="name">Hacienda Esmeralda</div>
-              <div className="coords">19.270°N · 99.108°W</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// --- Itinerary ---
-function Itinerary() {
-  const items = [
-    { t: "16:30", title: "Llegada", desc: "Recibimiento con agua de jamaica fría" },
-    { t: "17:00", title: "Ceremonia religiosa", desc: "Capilla principal" },
-    { t: "18:00", title: "Ceremonia civil", desc: "Jardín central" },
-    { t: "18:45", title: "Cóctel", desc: "Mezcales, mocktails y canapés" },
-    { t: "20:00", title: "Cena", desc: "Mesa asignada · ver sección de mesas" },
-    { t: "21:30", title: "Primer baile", desc: "“A Thousand Years”" },
-    { t: "22:00", title: "Pista abierta", desc: "DJ + banda en vivo" },
-    { t: "00:30", title: "Tornaboda", desc: "Tacos, pozole y café" },
-    { t: "03:00", title: "Despedida", desc: "Hasta siempre" },
-  ];
-  return (
-    <section className="section" id="itinerario" style={{ background: "var(--bg-warm)" }}>
-      <div className="shell">
-        <div className="sec-head">
-          <div><div className="sec-num">04 · Itinerario</div></div>
-          <div><h2 className="h2">El día,<br/><span className="serif-italic">hora por hora.</span></h2></div>
-        </div>
-        <div className="itinerary">
-          {items.map((it, i) => (
-            <div key={i} className="itin-row">
-              <div className="itin-time">{it.t}</div>
-              <div className="itin-evt">
-                <div className="t">{it.title}</div>
-                <div className="d">{it.desc}</div>
-              </div>
-              <div className="itin-icon">
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                  <circle cx="10" cy="10" r="9" stroke="#CD96D6" strokeWidth="1"/>
-                  <circle cx="10" cy="10" r="2" fill="#CD96D6"/>
-                </svg>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// --- Hotels ---
-function Hotels() {
+// --- Hospedaje ---
+function Stay() {
   const hotels = [
-    { tier: "Recomendado", name: "Hotel Boutique Xochimilco", meta: ["A 8 min · 4.2 km", "Código: BODA-AC2026"], price: "$2,400", note: "MXN / noche", link: "#" },
-    { tier: "Cercano", name: "Hacienda La Noria", meta: ["A 12 min · 6.1 km", "Hospedaje colonial"], price: "$1,950", note: "MXN / noche", link: "#" },
-    { tier: "Económico", name: "Hostal del Barrio", meta: ["A 15 min · 7.4 km", "Habitaciones privadas"], price: "$1,200", note: "MXN / noche", link: "#" },
-  ];
+    ['1', 'Fiesta Inn Perisur', 'Aprox. 15 min · Zona sur', 'Cómodo y confiable, ideal para venir en familia.'],
+    ['2', 'City Express Insurgentes Sur', 'Aprox. 20 min · Céntrico', 'Práctico y bien ubicado, perfecto para una noche.'],
+    ['3', 'Radisson Paraíso Perisur', 'Aprox. 15 min · Zona sur', 'Un poco más de lujo para consentirse el fin de semana.'],
+  ]
   return (
-    <section className="section" id="hoteles">
-      <div className="shell">
-        <div className="sec-head">
-          <div><div className="sec-num">05 · Dónde quedarse</div></div>
-          <div>
-            <h2 className="h2">Cerca,<br/><span className="serif-italic">para que se queden.</span></h2>
-            <p className="lead" style={{ marginTop: 20 }}>
-              Tres opciones con tarifa preferencial para invitados. Reserva con el código <code style={{fontFamily:"var(--mono)", color:"var(--primary-deep)"}}>BODA-AC2026</code>.
-            </p>
+    <section className="stay" data-screen-label="Hospedaje">
+      <div className="k reveal">Cerca, para que se queden</div>
+      <h2 className="reveal">Dónde<br /><em>quedarse.</em></h2>
+      <p className="lead reveal" style={{ marginBottom: 12 }}>Si vienes de fuera, aquí tres opciones cerca de la hacienda para que la fiesta te quede a un paso.</p>
+      <div className="stay-list" style={{ marginTop: 14 }}>
+        {hotels.map(([no, name, meta, desc]) => (
+          <div key={no} className="hotel reveal">
+            <span className="no">{no}</span>
+            <div>
+              <h3>{name}</h3>
+              <div className="meta">{meta}</div>
+              <p>{desc}</p>
+            </div>
           </div>
-        </div>
-        <div className="hotels">
-          {hotels.map((h, i) => (
-            <a key={i} href={h.link} className="hotel-card">
-              <div className="hotel-img"><div className="label">Hotel · {String(i+1).padStart(2,"0")}</div></div>
-              <div className="hotel-tier">{h.tier}</div>
-              <div className="hotel-name">{h.name}</div>
-              <div className="hotel-meta">
-                {h.meta.map((m, j) => <span key={j}>{m}</span>)}
-              </div>
-              <div className="hotel-foot">
-                <div className="hotel-price">{h.price}<small> {h.note}</small></div>
-                <div className="hotel-link">Reservar →</div>
-              </div>
-            </a>
-          ))}
-        </div>
+        ))}
       </div>
+      <p className="note reveal">Sugerencias cerca de la hacienda · confirmaremos tarifas y código de descuento pronto.</p>
     </section>
-  );
+  )
 }
 
-// --- Dress code ---
-function DressCode() {
-  const palette = [
-    { hex: "#AD96D6", name: "Lavanda" },
-    { hex: "#CD96D6", name: "Lila" },
-    { hex: "#D696BF", name: "Rosa" },
-    { hex: "#BFD696", name: "Verde" },
-    { hex: "#96D6AD", name: "Menta" },
-  ];
-  return (
-    <section className="section" id="dress" style={{ background: "var(--bg-warm)" }}>
-      <div className="shell">
-        <div className="sec-head">
-          <div><div className="sec-num">06 · Dress code</div></div>
-          <div><h2 className="h2">Etiqueta<br/><span className="serif-italic">por confirmar.</span></h2></div>
-        </div>
-        <div className="dress-grid">
-          <div>
-            <div className="dress-pending">
-              <small>Estamos finalizando</small>
-              Te avisaremos pronto, pero ve apartando algo elegante para una boda al atardecer.
-            </div>
-            <div style={{ marginTop: 32 }}>
-              <div className="eyebrow" style={{ marginBottom: 16 }}>Paleta sugerida<span className="dot"></span>para los invitados</div>
-              <div className="swatch-row">
-                {palette.map(p => (
-                  <div key={p.hex} className="swatch">
-                    <div className="chip" style={{ background: p.hex }}></div>
-                    <div className="hex">{p.hex.replace("#", "")}</div>
-                  </div>
-                ))}
-              </div>
-              <p className="body" style={{ maxWidth: "44ch", marginTop: 16 }}>
-                Inspiración para tu outfit: tonos lila, rosa pálido y verdes suaves combinan con la decoración del día.
-              </p>
-            </div>
-          </div>
-          <div>
-            <div className="eyebrow" style={{ marginBottom: 16 }}>Lo que sí queremos<span className="dot"></span>y lo que no</div>
-            <ul className="dress-list">
-              <li><span className="check">✓</span><span><b>Sí:</b> traje, vestido largo o midi, tonos suaves de la paleta.</span></li>
-              <li><span className="check">✓</span><span><b>Sí:</b> zapato cómodo — habrá pista, jardín y mucha pista.</span></li>
-              <li><span className="check">✗</span><span><b>No:</b> blanco, marfil o crema (gracias por reservarlos para la novia).</span></li>
-              <li><span className="check">✗</span><span><b>No:</b> jeans, tenis blancos ni shorts.</span></li>
-            </ul>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// --- Tables ---
-function Tables() {
-  const guests = [
-    { name: "Ana López", table: 1 },
-    { name: "Andrés García", table: 4 },
-    { name: "Carlos Hernández", table: 6 },
-    { name: "Diana Ruiz", table: 2 },
-    { name: "Familia Mendoza", table: 3 },
-    { name: "Familia Torres", table: 8 },
-    { name: "Fernando Castro", table: 5 },
-    { name: "Gabriela Vega", table: 7 },
-    { name: "Jorge Pérez", table: 1 },
-    { name: "Laura Domínguez", table: 9 },
-    { name: "Luis Ramírez", table: 11 },
-    { name: "María Fernández", table: 10 },
-    { name: "Mauricio Soto", table: 12 },
-    { name: "Patricia Núñez", table: 4 },
-    { name: "Rodrigo Aguilar", table: 6 },
-    { name: "Sofía Reyes", table: 2 },
-    { name: "Valeria Ortiz", table: 8 },
-    { name: "Víctor Salazar", table: 3 },
-  ];
-  const [q, setQ] = useState("");
-  const found = useMemo(() => {
-    if (!q.trim()) return null;
-    return guests.find(g => g.name.toLowerCase().includes(q.trim().toLowerCase()));
-  }, [q]);
-  return (
-    <section className="section" id="mesas">
-      <div className="shell">
-        <div className="sec-head">
-          <div><div className="sec-num">07 · Mesas</div></div>
-          <div>
-            <h2 className="h2">Encuentra<br/><span className="serif-italic">tu mesa.</span></h2>
-            <p className="lead" style={{ marginTop: 20 }}>
-              Escribe tu nombre completo (o el de quien te invitó) para ver dónde te tocó.
-            </p>
-          </div>
-        </div>
-        <div className="tables-wrap">
-          <div className="tables-search">
-            <span className="icn">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="11" cy="11" r="7"/><path d="m20 20-4.35-4.35"/></svg>
-            </span>
-            <input
-              type="text"
-              placeholder="Tu nombre · ej: Ana López"
-              value={q}
-              onChange={e => setQ(e.target.value)}
-            />
-          </div>
-          {found && (
-            <div className="tables-result show">
-              <div className="label">Te toca</div>
-              <div className="name">{found.name}</div>
-              <div className="table-num">Mesa {String(found.table).padStart(2, "0")}<small>Salón principal · 8 lugares</small></div>
-            </div>
-          )}
-          {q.trim() && !found && (
-            <div className="tables-result show">
-              <div className="label">Sin resultados</div>
-              <div className="name serif-italic" style={{ fontStyle: "italic" }}>No encontramos ese nombre.</div>
-              <p className="body" style={{ marginTop: 12 }}>Escríbenos por WhatsApp y lo resolvemos al instante.</p>
-            </div>
-          )}
-          <div style={{ marginTop: 32 }}>
-            <div className="eyebrow" style={{ marginBottom: 14 }}>Mapa de salón<span className="dot"></span>vista superior</div>
-            <div className="tables-grid">
-              {Array.from({ length: 12 }).map((_, i) => {
-                const num = i + 1;
-                const isActive = found && found.table === num;
-                return (
-                  <div key={num} className={`tbl ${isActive ? "active" : ""}`}>
-                    {String(num).padStart(2, "0")}<small>mesa</small>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// --- Gifts ---
+// --- Regalos ---
 function Gifts() {
-  const gifts = [
-    { num: "01", name: "Liverpool", desc: "Mesa de regalos tradicional con artículos para nuestra primera casa.", code: "Evento: 5147892", link: "#" },
-    { num: "02", name: "Amazon", desc: "Lista curada con todo lo que nos hace falta — desde lo práctico hasta el capricho.", code: "Lista: A&C-2026", link: "#" },
-    { num: "03", name: "Luna de miel", desc: "Si prefieres aportar al viaje que estamos planeando, este es el sobre digital.", code: "Vía transferencia", link: "#" },
-  ];
   return (
-    <section className="section" id="regalos" style={{ background: "var(--bg-warm)" }}>
-      <div className="shell">
-        <div className="sec-head">
-          <div><div className="sec-num">08 · Mesa de regalos</div></div>
-          <div>
-            <h2 className="h2">Tu presencia<br/><span className="serif-italic">ya es regalo.</span></h2>
-            <p className="lead" style={{ marginTop: 20 }}>
-              Pero si quieres consentirnos, dejamos tres opciones — la que prefieras está bien.
-            </p>
-          </div>
+    <section className="gifts" data-screen-label="Regalos">
+      <div className="k reveal" style={{ justifyContent: 'center' }}>Regalos</div>
+      <h2 className="reveal">Tu presencia ya es<br /><em>regalo suficiente.</em></h2>
+      <div className="money reveal">
+        <div className="ic">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+            <path d="M12 2v20M17 6.5c0-2-2.2-3-5-3s-5 1-5 3.2S9 9.5 12 10s5 1.3 5 3.5-2.2 3.3-5 3.3-5-1-5-3" />
+          </svg>
         </div>
-        <div className="gifts-grid">
-          {gifts.map(g => (
-            <a key={g.num} href={g.link} className="gift-card">
-              <div className="num">{g.num}</div>
-              <div className="name">{g.name}</div>
-              <div className="desc">{g.desc}</div>
-              <div style={{ fontFamily: "var(--mono)", fontSize: 11, color: "var(--ink-mute)", letterSpacing: "0.08em" }}>{g.code}</div>
-              <div className="link">Ver opciones <span className="arrow">→</span></div>
-            </a>
-          ))}
-        </div>
+        <p>Si de todos modos quieres consentirnos, lo que más nos ayudaría es un <b>regalo en efectivo para nuestra luna de miel</b>. Cada aporte nos acerca al viaje que soñamos juntos.</p>
       </div>
     </section>
-  );
+  )
 }
 
-// --- App ---
-function PhotoApp() {
+// --- Valores ---
+function Values() {
   return (
-    <section className="section" id="app">
-      <div className="shell">
-        <div className="sec-head">
-          <div><div className="sec-num">09 · App de fotos</div></div>
-          <div>
-            <h2 className="h2">Tus fotos,<br/><span className="serif-italic">en un solo álbum.</span></h2>
-          </div>
-        </div>
-        <div className="app-grid">
-          <div className="app-info">
-            <h3>Toda la noche, con todos.</h3>
-            <p className="body-lg">
-              Descarga la app, ingresa el código del evento y todas las fotos que tomes esa noche
-              entran al álbum compartido en tiempo real. Sin etiquetas, sin perderse nada.
-            </p>
-            <div className="app-steps">
-              <div className="app-step">
-                <div className="n">01</div>
-                <div className="t">Descarga <b>POV</b> en App Store o Google Play.</div>
-              </div>
-              <div className="app-step">
-                <div className="n">02</div>
-                <div className="t">Abre la app e ingresa el código <b>AYC1107</b>.</div>
-              </div>
-              <div className="app-step">
-                <div className="n">03</div>
-                <div className="t">Toma fotos durante la boda — se suben automáticamente.</div>
-              </div>
-              <div className="app-step">
-                <div className="n">04</div>
-                <div className="t">Al día siguiente recibes el álbum completo en tu correo.</div>
-              </div>
-            </div>
-            <div className="app-cta-row">
-              <a className="btn btn-primary" href="#">Descargar iOS →</a>
-              <a className="btn" href="#">Descargar Android →</a>
-            </div>
-          </div>
-          <div>
-            <div className="app-phone">
-              <div className="app-screen">
-                <div className="top">
-                  <div className="lg">A & C · 7 nov</div>
-                  <div className="sm">128 fotos · en vivo</div>
-                </div>
-                <div className="photogrid">
-                  {Array.from({ length: 12 }).map((_, i) => <div key={i}></div>)}
-                </div>
-                <div className="cta">+ Tomar foto</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+    <section className="values" data-screen-label="Valores">
+      <div className="glow"></div>
+      <div className="eyebrow reveal">Lo que nos mueve</div>
+      <p className="manifesto reveal">Creemos en el amor, en la risa fuerte y en un <b>mundo más justo.</b></p>
+      <div className="after reveal">Eso también se celebra</div>
     </section>
-  );
+  )
+}
+
+// --- Confeti / pétalos que estallan al confirmar ---
+const CONFETTI_PAL = ['#8A6FB8', '#6E5497', '#B79BDE', '#F7F4EF', '#EFEAE2', '#C9A9E8']
+
+function useConfetti(canvasRef) {
+  const state = useRef({ parts: [], raf: null, dpr: 1, W: 0, H: 0 })
+
+  return (cx, cy) => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    const s = state.current
+
+    const resize = () => {
+      s.dpr = Math.min(2, window.devicePixelRatio || 1)
+      s.W = canvas.width = window.innerWidth * s.dpr
+      s.H = canvas.height = window.innerHeight * s.dpr
+      canvas.style.width = window.innerWidth + 'px'
+      canvas.style.height = window.innerHeight + 'px'
+    }
+
+    const draw = () => {
+      ctx.clearRect(0, 0, s.W, s.H)
+      let alive = 0
+      for (const p of s.parts) {
+        p.life++; if (p.life > p.ttl) continue; alive++
+        p.vy += p.g; p.vx *= 0.99; p.x += p.vx; p.y += p.vy; p.rot += p.vr
+        const fade = Math.max(0, 1 - (p.life / p.ttl))
+        ctx.save(); ctx.globalAlpha = fade; ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.fillStyle = p.col
+        if (p.round) { ctx.beginPath(); ctx.ellipse(0, 0, p.w / 2, p.h / 2, 0, 0, Math.PI * 2); ctx.fill() }
+        else ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h)
+        ctx.restore()
+      }
+      if (alive > 0) { s.raf = requestAnimationFrame(draw) }
+      else { s.raf = null; s.parts = []; ctx.clearRect(0, 0, s.W, s.H); canvas.style.display = 'none' }
+    }
+
+    resize(); canvas.style.display = 'block'
+    const N = 150
+    for (let i = 0; i < N; i++) {
+      const ang = Math.random() * Math.PI * 2
+      const spd = (4 + Math.random() * 10) * s.dpr
+      s.parts.push({
+        x: cx * s.dpr, y: cy * s.dpr,
+        vx: Math.cos(ang) * spd, vy: Math.sin(ang) * spd - (5 + Math.random() * 7) * s.dpr,
+        g: (0.18 + Math.random() * 0.14) * s.dpr,
+        w: (6 + Math.random() * 8) * s.dpr, h: (9 + Math.random() * 10) * s.dpr,
+        rot: Math.random() * Math.PI, vr: (Math.random() - 0.5) * 0.3,
+        col: CONFETTI_PAL[(Math.random() * CONFETTI_PAL.length) | 0],
+        life: 0, ttl: 90 + Math.random() * 50, round: Math.random() < 0.5,
+      })
+    }
+    if (!s.raf) s.raf = requestAnimationFrame(draw)
+  }
 }
 
 // --- RSVP ---
-function RSVP() {
-  const phone = "5215512345678"; // placeholder
-  const msg = encodeURIComponent("¡Hola! Confirmo asistencia a la boda de A&C el 7 de noviembre.\n\nNombre:\nAcompañantes:\nRestricciones alimenticias:");
+function Rsvp() {
+  const [guest] = useState(getGuestName)
+  const [done, setDone] = useState(false)
+  const [pulse, setPulse] = useState(false)
+  const btnRef = useRef(null)
+  const canvasRef = useRef(null)
+  const burst = useConfetti(canvasRef)
+
+  const confirm = () => {
+    if (done) return
+    setDone(true)
+    setPulse(true)
+    setTimeout(() => setPulse(false), 600)
+    const reduce = window.matchMedia('(prefers-reduced-motion:reduce)').matches
+    if (!reduce && btnRef.current) {
+      const r = btnRef.current.getBoundingClientRect()
+      burst(r.left + r.width / 2, r.top + r.height / 2)
+      setTimeout(() => {
+        if (!btnRef.current) return
+        const r2 = btnRef.current.getBoundingClientRect()
+        burst(r2.left + r2.width / 2, r2.top + r2.height / 2)
+      }, 260)
+    }
+  }
+
   return (
-    <section className="section" id="rsvp" style={{ padding: "0", background: "var(--bg)" }}>
-      <div className="shell" style={{ padding: 0 }}>
-        <div className="rsvp-wrap">
-          <div>
-            <div className="eyebrow">RSVP<span className="dot"></span>Confirmación</div>
-            <h2 className="h2" style={{ marginTop: 16 }}>¿Vienes<br/><span className="serif-italic">a celebrarnos?</span></h2>
-            <p className="lead">
-              Necesitamos confirmar tu lugar y el de tus acompañantes para acomodar todo
-              con calma. Nos escribes por WhatsApp y listo.
-            </p>
-            <div className="rsvp-deadline">Confirma antes del 15 de octubre 2026</div>
-          </div>
-          <div className="rsvp-actions">
-            <a className="rsvp-btn" href={`https://wa.me/${phone}?text=${msg}`} target="_blank" rel="noopener">
-              <span className="l">
-                <span className="lt">Sí, ahí estaremos</span>
-                <span className="ls">Whatsapp · respuesta inmediata</span>
-              </span>
-              <span style={{ fontSize: 22 }}>→</span>
-            </a>
-            <a className="rsvp-btn" href={`https://wa.me/${phone}?text=${encodeURIComponent("Hola, lamentablemente no podré asistir a la boda. ¡Mucha felicidad!")}`} target="_blank" rel="noopener">
-              <span className="l">
-                <span className="lt">No podré ir</span>
-                <span className="ls">Te mandaremos un abrazo</span>
-              </span>
-              <span style={{ fontSize: 22 }}>→</span>
-            </a>
-            <a className="rsvp-btn" href={`https://wa.me/${phone}?text=${encodeURIComponent("Hola, tengo una duda sobre la boda...")}`} target="_blank" rel="noopener">
-              <span className="l">
-                <span className="lt">Tengo una pregunta</span>
-                <span className="ls">Sobre logística, hoteles, etc.</span>
-              </span>
-              <span style={{ fontSize: 22 }}>→</span>
-            </a>
-          </div>
+    <section className="rsvp" data-screen-label="Confirmar">
+      <div className="eyebrow reveal" style={{ color: 'var(--lila)', marginBottom: 16 }}>Confirmación</div>
+      <h2 className="reveal">¿Nos acompañas?</h2>
+      <p className="invita reveal">
+        <b>{guest}, este día no sería lo mismo sin ustedes.</b>
+      </p>
+      <p className="invita reveal">
+        Con mucho cariño hemos preparado esta celebración pensando en cada uno
+        de nuestros invitados. Por ello, <b>esta invitación es válida únicamente
+        para las personas indicadas en ella.</b> Les agradecemos su comprensión,
+        ya que por cuestiones de organización <b>no podremos recibir invitados
+        adicionales.</b>
+      </p>
+      <button
+        ref={btnRef}
+        type="button"
+        className={`btn reveal ${done ? 'done' : ''} ${pulse ? 'pulse' : ''}`}
+        onClick={confirm}
+      >
+        <span className="lbl">Confirmar asistencia</span>
+        <svg className="chk" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" /></svg>
+      </button>
+      <p className="fine reveal" style={done ? { opacity: 0 } : undefined}>Agradecemos tu respuesta antes del 15 de octubre 2026</p>
+      <div className={`confirmed ${done ? 'show' : ''}`}>
+        <div className="seal-ok">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7" /></svg>
         </div>
+        <p className="msg">¡Ahí <em>estaremos</em>!<br />Gracias por decir que sí.</p>
+        <p className="msg-sub">Nos vemos el 7 de noviembre</p>
       </div>
+      <canvas id="confetti" ref={canvasRef}></canvas>
     </section>
-  );
+  )
 }
 
 // --- Footer ---
-function Footer({ logoStyle }) {
+function Footer() {
   return (
-    <footer className="footer">
-      <div className="footer-mark">
-        <Monogram size={56} style={logoStyle} />
-      </div>
-      <div className="footer-date">07 · 11 · 2026 · Ciudad de México</div>
-      <div className="footer-fine">
-        Hecho con <span className="heart">♥</span> en CDMX · y supervisado por Mishka <PawSvg size={11}/>
-      </div>
+    <footer>
+      <div className="lg">Alejandro <span className="amp">&amp;</span> Carmen</div>
+      <div className="carino">con cariño, de Nayarit a la CDMX</div>
+      07 · 11 · 2026
     </footer>
-  );
+  )
 }
 
-// --- Music control ---
-function MusicToggle() {
-  const [playing, setPlaying] = useState(false);
-  const audioRef = useRef(null);
-  useEffect(() => {
-    audioRef.current = new Audio();
-    // No actual audio source — but we expose toggle and a note
-    audioRef.current.loop = true;
-    audioRef.current.volume = 0.4;
-  }, []);
-  const toggle = () => {
-    setPlaying(p => {
-      const next = !p;
-      // No real source; just visual indication
-      return next;
-    });
-  };
-  return (
-    <button className={`music-toggle ${playing ? "playing" : ""}`} onClick={toggle} title='“A Thousand Years”'>
-      <span className="bars">
-        <span></span><span></span><span></span><span></span>
-      </span>
-      {playing ? "A Thousand Years · pausar" : "Reproducir nuestra canción"}
-    </button>
-  );
-}
-
-// --- Cat walker on scroll ---
+// --- Gato estilo "El Cadáver de la Novia" ---
 function CatWalker() {
-  const [x, setX] = useState(-200);
-  const [visible, setVisible] = useState(false);
+  const ref = useRef(null)
   useEffect(() => {
-    let lastScroll = window.scrollY;
-    let timer;
     const onScroll = () => {
-      const dy = window.scrollY - lastScroll;
-      lastScroll = window.scrollY;
-      if (Math.abs(dy) > 5) {
-        setVisible(true);
-        const docH = document.documentElement.scrollHeight - window.innerHeight;
-        const pct = window.scrollY / docH;
-        setX(-160 + pct * (window.innerWidth + 320));
-      }
-      clearTimeout(timer);
-      timer = setTimeout(() => setVisible(false), 1500);
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+      const max = Math.max(1, document.body.scrollHeight - window.innerHeight)
+      const f = Math.min(1, Math.max(0, window.scrollY / max))
+      if (ref.current) ref.current.style.left = (6 + f * 72) + '%'
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    onScroll()
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
   return (
-    <div className={`cat-walker ${visible ? "visible" : ""}`} style={{ transform: `translateX(${x}px)` }}>
-      <img src={gatoUrl} alt="Mishka caminando" />
+    <div className="catwrap" aria-hidden="true">
+      <svg ref={ref} className="cat" viewBox="0 0 100 96" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <g className="tail">
+          <path d="M14 66 C 2 62, 0 44, 8 34 C 12 29, 20 30, 20 37 C 20 43, 12 43, 12 50 C 12 58, 22 60, 26 62 Z" fill="#6E5497" stroke="#3A2F48" strokeWidth="1.5" />
+        </g>
+        <g className="body-bob">
+          {/* patas lejanas (lado opuesto) — más oscuras y detrás del cuerpo, en fase diagonal */}
+          <g className="legBfar"><rect x="36" y="60" width="5.5" height="22" rx="2.75" fill="#5A4680" stroke="#3A2F48" strokeWidth="1.2" /></g>
+          <g className="legFfar"><rect x="52" y="60" width="5.5" height="24" rx="2.75" fill="#5A4680" stroke="#3A2F48" strokeWidth="1.2" /></g>
+          {/* patas cercanas */}
+          <g className="legB"><rect x="30" y="60" width="6" height="24" rx="3" fill="#6E5497" stroke="#3A2F48" strokeWidth="1.5" /></g>
+          <g className="legF"><rect x="58" y="60" width="6" height="26" rx="3" fill="#7B60A6" stroke="#3A2F48" strokeWidth="1.5" /></g>
+          <path d="M20 62 C 18 44, 30 34, 50 34 C 72 34, 80 46, 78 64 C 77 74, 66 76, 50 76 C 34 76, 22 74, 20 62 Z" fill="#7B60A6" stroke="#3A2F48" strokeWidth="1.6" />
+          <path d="M40 40 v10 M44 39 v12 M48 39 v12 M52 40 v10" stroke="#3A2F48" strokeWidth="1" opacity="0.5" />
+          <path d="M56 30 C 56 16, 88 16, 88 32 C 88 46, 74 50, 66 48 C 59 46, 56 40, 56 30 Z" fill="#7B60A6" stroke="#3A2F48" strokeWidth="1.6" />
+          <path d="M58 20 L 54 6 L 66 16 Z" fill="#6E5497" stroke="#3A2F48" strokeWidth="1.4" />
+          <path d="M80 18 L 86 4 L 88 20 Z" fill="#6E5497" stroke="#3A2F48" strokeWidth="1.4" />
+          <ellipse cx="66" cy="30" rx="6.5" ry="8" fill="#F3EEFA" stroke="#3A2F48" strokeWidth="1.2" />
+          <ellipse cx="80" cy="30" rx="6.5" ry="8" fill="#F3EEFA" stroke="#3A2F48" strokeWidth="1.2" />
+          <g className="pupil" style={{ transformOrigin: '73px 31px' }}>
+            <circle cx="67" cy="31" r="2.6" fill="#2C2530" />
+            <circle cx="81" cy="31" r="2.6" fill="#2C2530" />
+          </g>
+          <path d="M72 39 l3 0 l-1.5 2 z" fill="#C24B7A" />
+        </g>
+      </svg>
     </div>
-  );
-}
-
-// --- Egg modal ---
-function EggModal({ open, onClose }) {
-  if (!open) return null;
-  return (
-    <div className="egg-found" onClick={onClose}>
-      <div style={{ fontSize: 80 }}><CatSvg size={100} color="#CD96D6"/></div>
-      <h3>Encontraste a Mishka.</h3>
-      <p>
-        Nuestro tercer integrante. Estará feliz de verlos esa noche — bueno, en realidad estará
-        durmiendo en casa, pero estará espiritualmente presente.
-      </p>
-      <button className="btn btn-primary" onClick={onClose}>Seguir explorando</button>
-    </div>
-  );
+  )
 }
 
 export default function WeddingApp() {
-  const logoStyle = "serif";
-  const [eggOpen, setEggOpen] = useState(false);
-
-  // Egg click delegation
+  // Reveal-on-scroll (idéntico al script del diseño)
   useEffect(() => {
-    const onClick = (e) => {
-      const t = e.target.closest("[data-egg]");
-      if (t) { e.preventDefault(); setEggOpen(true); }
-    };
-    document.addEventListener("click", onClick);
-    return () => document.removeEventListener("click", onClick);
-  }, []);
-
-  // Reveal-on-scroll
-  useEffect(() => {
-    const obs = new IntersectionObserver((entries) => {
-      entries.forEach(e => {
-        if (e.isIntersecting) e.target.classList.add("in");
-      });
-    }, { threshold: 0.08 });
-    document.querySelectorAll(".section").forEach(el => {
-      el.classList.add("reveal");
-      obs.observe(el);
-    });
-    return () => obs.disconnect();
-  }, []);
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((e) => {
+        if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target) }
+      })
+    }, { threshold: 0.12 })
+    const els = document.querySelectorAll('.reveal')
+    els.forEach((el, i) => {
+      el.style.transitionDelay = (Math.min(i % 4, 3) * 70) + 'ms'
+      io.observe(el)
+    })
+    return () => io.disconnect()
+  }, [])
 
   return (
     <>
-      <Nav logoStyle={logoStyle} />
-      <Hero logoStyle={logoStyle} />
-      <Gallery />
-      <Story />
-      <WhenWhere />
-      <Itinerary />
-      <Hotels />
-      <DressCode />
-      <Tables />
-      <Gifts />
-      <PhotoApp />
-      <RSVP />
-      <Footer logoStyle={logoStyle} />
-      <MusicToggle />
+      <Opener />
+      <div className="device">
+        <Nav />
+        <Hero />
+        <Night />
+        <Boda />
+        <Plan />
+        <Venue />
+        <Stay />
+        <Gifts />
+        <Values />
+        <Rsvp />
+        <Footer />
+      </div>
       <CatWalker />
-      <EggModal open={eggOpen} onClose={() => setEggOpen(false)} />
     </>
-  );
+  )
 }

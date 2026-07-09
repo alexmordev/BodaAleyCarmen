@@ -16,9 +16,10 @@ npm run preview  # previsualizar el build
 
 - `index.html` — punto de entrada de Vite (fuentes de Google + `#root`). **No borrar ni mover**; Vite lo necesita en la raíz para compilar.
 - `src/main.jsx` — bootstrap de React.
-- `src/App.jsx` — todas las secciones del sitio (un solo archivo, componentes verbatim del diseño).
-- `src/styles.css` — estilos (copia fiel del diseño original; no reescribir, solo extender).
-- `src/assets/images/` — imágenes empaquetadas por Vite (p. ej. `gato.jfif`).
+- `src/App.jsx` — todas las secciones del sitio (un solo archivo, componentes verbatim del diseño mobile-first "Alejandro & Carmen", importado desde Claude Design).
+- `src/styles.css` — estilos (copia fiel del diseño `.device` mobile-first; no reescribir, solo extender).
+- `src/assets/images/` — imágenes empaquetadas por Vite: `nosotros-sillon.jpg` (hero), `nosotros-cena.jpg` (cena primera cita), `propuesta.jpg` y `anillo-flores.jpg` (pedida), `hacienda.webp` (lugar).
+  **Estado actual: son placeholders generados** (rectángulo con etiqueta) — sustituir por las fotos reales usando el mismo nombre de archivo para que el sitio las recoja automáticamente.
 
 ## Reglas del proyecto
 
@@ -31,13 +32,13 @@ npm run preview  # previsualizar el build
 3. **`base` de Vite es relativo (`./`)** para que los assets carguen servidos desde
    la raíz del dominio. No cambiar a absoluto sin motivo.
 4. El **gato que cruza la pantalla al hacer scroll** (componente `CatWalker`, fijo
-   abajo) usa `src/assets/images/gato.png` (silueta con fondo transparente).
-5. **Pipeline de imágenes** (`scripts/process-assets.mjs`, usa `sharp`): toma las
-   fotos crudas de `dist/assets/Photos-3-001/` y el icono del gato, les quita peso /
-   fondo y las escribe en `src/assets/images/` (hero, `gallery/g1..g7`, `gato.png`).
-   Las fotos marcadas con `fav` en el nombre son las favoritas y tienen prioridad.
-   El recorte usa `fit: cover` con `strategy.attention` para no cortar caras.
-   Las salidas se commitean; `sharp` NO se usa en el build (solo es devDependency).
+   abajo) es un SVG inline estilo "El Cadáver de la Novia" (sin imagen externa),
+   tal cual viene del diseño. Su posición horizontal se actualiza con el scroll.
+5. **Pipeline de imágenes** (`scripts/process-assets.mjs`, usa `sharp`): quedó del
+   diseño anterior (generaba `hero.jpg`, `gallery/g1..g7`, `gato.png`) y **ya no
+   coincide con los nombres de asset actuales** (`nosotros-sillon.jpg`, etc.). No
+   ejecutar hasta actualizarlo; por ahora las imágenes se colocan a mano en
+   `src/assets/images/` con el nombre exacto que espera `App.jsx`.
 
 ## Ramas
 
