@@ -389,6 +389,10 @@ function Rsvp() {
         ya que por cuestiones de organización <b>no podremos recibir invitados
         adicionales.</b>
       </p>
+      <p className="invita adultos reveal">
+        Con mucho cariño, esta celebración será <b>exclusiva para adultos.</b>
+        <br />Por respeto y cuidado de las infancias.
+      </p>
       <button
         ref={btnRef}
         type="button"

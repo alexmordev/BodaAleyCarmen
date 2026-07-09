@@ -143,6 +143,7 @@ h2 em{font-style:italic; color:var(--lila);}
 .rsvp h2{font-style:italic; font-family:'Cormorant Garamond',serif;}
 .rsvp .invita{max-width:34ch; margin:20px auto 0; font-family:'Cormorant Garamond',serif; font-size:19px; line-height:1.55; color:var(--ink-soft);}
 .rsvp .invita b{color:var(--lila); font-weight:600;}
+.rsvp .invita.adultos{font-size:16px; padding-top:22px; margin-top:26px; border-top:1px solid var(--line);}
 .rsvp .btn{position:relative; display:inline-flex; align-items:center; gap:10px; margin-top:24px;
   font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.1em; text-transform:uppercase;
   background:var(--lila); color:#fff; padding:16px 34px; border:none; border-radius:30px; cursor:pointer;
