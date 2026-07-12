@@ -1,8 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // App Node completa (SSR + futuras API routes para el RSVP). En Hostinger se
-  // ejecuta con `next start`. Si se necesitara export estático, añadir:
-  //   output: 'export'
+  // App Node completa (SSR + API routes para el RSVP). Hostinger ejecuta la app
+  // con Node: `next build` + `next start`. No es export estático.
   reactStrictMode: true,
 }
 

@@ -74,17 +74,15 @@ Decisión tomada con el cliente (ver `mission.md` → *Acceso por invitación*):
 
 ## Despliegue
 
-> ⚠️ **Pendiente de re-cablear tras la migración a Next.js.** El flujo antiguo
-> (publicar `dist/` estático en la rama `production` → Hostinger lo clona en
-> `public_html`) **ya no aplica**: una app Next.js con `next start` necesita
-> runtime de Node, no archivos estáticos.
+Hostinger ejecuta la app Next.js con **Node** (ya actualizado; no sirve
+estáticos). El deploy lo gestiona Hostinger desde su **integración Git**: clona el
+repo (`main`), corre `npm install` + `npm run build` y arranca con
+`npm run start` (`next start`).
 
-- **CI (`.github/workflows/deploy.yml`):** ahora solo valida que `next build`
-  compila en cada push (a `main` y `develop`). No publica nada.
-- **Deploy en Hostinger:** por definir según la config de Node ya activada
-  (Node app manager / Git deploy + `next start`, o PM2). Documentar aquí al
-  fijarlo. Alternativa: `output: 'export'` → volver al modelo estático en
-  `production` (pero se pierden las API routes para RSVP).
+- **CI (`.github/workflows/deploy.yml`):** solo valida que `next build` compila en
+  cada push (`main` y `develop`). No publica ninguna rama.
+- **Rama servida:** `main`. La rama `production` (flujo estático anterior) queda
+  obsoleta.
 - **Backend RSVP:** candidato natural ahora son **API routes de Next.js**
   (`app/api/*`), al correr como app Node.
 

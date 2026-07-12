@@ -200,6 +200,7 @@
   },
   "active": "c268441f560aa948",
   "lastOpenFiles": [
+    "next.config.mjs.tmp.4484.838020ae4887",
     "scripts/process-assets.mjs",
     "scripts",
     "public/images/propuesta.jpg",
@@ -215,7 +216,6 @@
     "jsconfig.json",
     "app/WeddingApp.jsx",
     "app/page.jsx",
-    "app/layout.jsx",
     "README.md",
     "CLAUDE.md",
     "assets/propuesta-DG5iOpR-.jpg",

@@ -56,20 +56,23 @@ npm run start    # servir el build (app Node, next start)
   app Node de Next.js** (ya no se publica). Reutilizar solo si se vuelve a export
   estático (`output: 'export'`).
 
-## Despliegue (Hostinger) — ⚠️ pendiente de re-cablear tras la migración
+## Despliegue (Hostinger) — app Node
 
-Con Next.js como **app Node** (`next start`) el flujo antiguo (publicar `dist/`
-estático en la rama `production` → Hostinger lo clona en `public_html`) **ya no
-aplica**: se necesita runtime de Node en el servidor, no archivos estáticos.
+Hostinger está configurado para **ejecutar la app Next.js con Node** (no sirve
+estáticos). El despliegue lo hace Hostinger desde su **integración Git**: clona el
+repo, ejecuta `npm install` + `npm run build` y arranca la app con
+`npm run start` (`next start`).
 
-- **CI actual (`.github/workflows/deploy.yml`):** solo valida que `next build`
-  compila en cada push (`main` y `develop`). **No publica** ninguna rama.
-- **Deploy real:** por definir según la configuración de Node ya activada en
-  Hostinger (Node app manager / Git deploy + `next start`, o PM2). Documentar el
-  método aquí al fijarlo.
-- **Alternativa export estático:** añadir `output: 'export'` en `next.config.mjs`
-  → genera `out/` → se podría volver al modelo de publicar en `production`
-  (pero se pierden las API routes para el RSVP).
+- **CI (`.github/workflows/deploy.yml`):** solo valida que `next build` compila en
+  cada push (`main` y `develop`). **No publica** ninguna rama; el deploy lo
+  gestiona Hostinger.
+- **Rama que sirve Hostinger:** `main` (código fuente). Ya **no** se usa la rama
+  `production` (era del flujo estático anterior).
+
+### Configuración en Hostinger (una sola vez)
+1. hPanel → **Node.js / Git** → conectar el repositorio, rama `main`.
+2. **Build command:** `npm run build` · **Start command:** `npm run start`.
+3. Node 24. La app escucha el puerto que Hostinger inyecte (`$PORT`).
 
 ## Convenciones
 
