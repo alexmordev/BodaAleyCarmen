@@ -1,0 +1,40 @@
+name: Build (Next.js)
+
+# Migrado a Next.js (app Node: SSR + futuras API routes para el RSVP).
+#
+# El flujo anterior publicaba un `dist/` estatico en la rama `production` y
+# Hostinger la clonaba en public_html. Eso ya NO aplica: una app Next.js con
+# `next start` necesita un runtime de Node en el servidor, no archivos estaticos.
+#
+# Este workflow valida que `next build` compila en cada push. El DESPLIEGUE real
+# en Hostinger (Node app manager / Git deploy + `next start`, o PM2) queda por
+# definir segun la configuracion de Node ya activada en Hostinger.
+#   - Si en el futuro se opta por export estatico, anadir `output: 'export'` en
+#     next.config.mjs y volver a publicar la carpeta `out/` en `production`.
+on:
+  push:
+    branches: [main, develop]
+  workflow_dispatch:
+
+concurrency:
+  group: nextjs-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build

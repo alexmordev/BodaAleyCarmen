@@ -1,1 +1,30 @@
-\node_modules
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+.next/
+out/
+next-env.d.ts
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+.obsidian/
+
+# Herramientas locales / notas (no van al repo)
+.agents/
+Spec/
+skills-lock.json
+IMAGENES-PENDIENTES.md
+
+# Env
+.env
+.env.local
+.env.*.local
