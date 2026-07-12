@@ -2,7 +2,7 @@ import './globals.css'
 
 export const metadata = {
   title: 'Alejandro & Carmen · 07.11.2026',
-  description: 'Nos casamos donde todo se siente en calma. Y queremos que estés ahí.',
+  description: 'Nos casamos donde y queremos que estés ahí.',
 }
 
 export const viewport = {
