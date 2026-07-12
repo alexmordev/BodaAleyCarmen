@@ -1,10 +1,13 @@
+'use client'
 // === Wedding site — réplica fiel del diseño "Alejandro & Carmen" (Claude Design) ===
 import React, { useEffect, useRef, useState } from 'react'
-import imgSillon from './assets/images/nosotros-sillon.jpg'
-import imgCena from './assets/images/nosotros-cena.jpg'
-import imgPropuesta from './assets/images/propuesta.jpg'
-import imgAnillo from './assets/images/anillo-flores.jpg'
-import imgHacienda from './assets/images/hacienda.webp'
+
+// Imágenes servidas desde /public/images (Next.js sirve /public en la raíz).
+const imgSillon = '/images/nosotros-sillon.jpg'
+const imgCena = '/images/nosotros-cena.jpg'
+const imgPropuesta = '/images/propuesta.jpg'
+const imgAnillo = '/images/anillo-flores.jpg'
+const imgHacienda = '/images/hacienda.webp'
 
 const WEDDING_TARGET = new Date('2026-11-07T17:30:00-06:00').getTime()
 

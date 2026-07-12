@@ -1,23 +1,27 @@
-name: Build & Deploy (Hostinger)
+name: Build (Next.js)
 
-# En cada push a main: compila el proyecto y publica el resultado YA construido
-# en la rama `production` (archivos en la raiz). Hostinger se conecta a esa rama
-# y clona su contenido en public_html, sirviendo el sitio estatico tal cual.
-# (Hostinger no compila: solo sirve archivos.)
+# Migrado a Next.js (app Node: SSR + futuras API routes para el RSVP).
+#
+# El flujo anterior publicaba un `dist/` estatico en la rama `production` y
+# Hostinger la clonaba en public_html. Eso ya NO aplica: una app Next.js con
+# `next start` necesita un runtime de Node en el servidor, no archivos estaticos.
+#
+# Este workflow valida que `next build` compila en cada push. El DESPLIEGUE real
+# en Hostinger (Node app manager / Git deploy + `next start`, o PM2) queda por
+# definir segun la configuracion de Node ya activada en Hostinger.
+#   - Si en el futuro se opta por export estatico, anadir `output: 'export'` en
+#     next.config.mjs y volver a publicar la carpeta `out/` en `production`.
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
   workflow_dispatch:
 
-permissions:
-  contents: write
-
 concurrency:
-  group: hostinger-build
+  group: nextjs-build-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  build-and-publish:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -34,14 +38,3 @@ jobs:
 
       - name: Build
         run: npm run build
-
-      - name: Publish dist to production branch
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_branch: production
-          publish_dir: ./dist
-          # La rama production contiene SOLO los archivos construidos en su raiz.
-          force_orphan: true
-          user_name: github-actions[bot]
-          user_email: github-actions[bot]@users.noreply.github.com

@@ -2,20 +2,19 @@
   "name": "aleycarmen-boda",
   "private": true,
   "version": "1.0.0",
-  "type": "module",
   "description": "Sitio web de la boda de Alejandro & Carmen · 07.11.2026",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
   },
   "dependencies": {
+    "next": "^15.1.6",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
-    "@vitejs/plugin-react": "^4.3.4",
-    "sharp": "^0.35.2",
-    "vite": "^5.4.11"
+    "sharp": "^0.35.2"
   }
 }
