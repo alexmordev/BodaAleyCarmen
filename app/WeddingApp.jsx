@@ -146,7 +146,7 @@ function Hero() {
     <section className="hero" data-screen-label="Portada">
       <div className="eyebrow reveal">Sábado · 7 de noviembre 2026 · 17:30</div>
       <h1 className="reveal">Alejandro<br /><em>&amp;</em> Carmen</h1>
-      <p className="sub reveal">Nos casamos donde todo se siente en calma. Y queremos que estés ahí.</p>
+      <p className="sub reveal">Nos casamos donde y queremos que estés ahí..</p>
       <div className="heroimg reveal">
         <img src={imgSillon} alt="Alejandro y Carmen" />
       </div>
