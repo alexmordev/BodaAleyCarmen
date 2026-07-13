@@ -13,93 +13,97 @@ Cada fase debería caber en un PR pequeño hacia `develop`.
 ## Fase 0 — Cimientos y saneamiento
 
 - [x] React + Vite en producción, despliegue a Hostinger vía rama `production`.
+      (Migrado a Next.js app Node; `production` obsoleta — ver `tech-stack.md`.)
 - [x] Actualizar `scripts/process-assets.mjs` a los nombres de asset actuales
-      (`nosotros-sillon.jpg`, `nosotros-cena.jpg`, `propuesta.jpg`,
-      `anillo-flores.jpg`, `hacienda.webp`) **o** documentarlo como obsoleto.
+      **o** documentarlo como obsoleto. → Documentado obsoleto en
+      `IMAGENES-PENDIENTES.md` y `CLAUDE.md`.
 - [x] Resolver `IMAGENES-PENDIENTES.md`: inventario de qué fotos reales faltan.
-- [ ] Verificar build limpio y responsive base en móvil (referencia de diseño).
+- [~] Verificar build limpio y responsive base en móvil (referencia de diseño).
+      `next build` compila; falta QA visual móvil con las fotos reales.
 
 ## Fase 1 — Sección Hero + Nav + Countdown
 
 - [x] Foto real del hero (`nosotros-sillon.jpg`) sustituyendo placeholder.
-- [ ] Verificar cuenta regresiva (`Countdown`) al 2026-11-07 17:30 CST.
-- [ ] Nav y anclas a secciones funcionando en móvil.
+- [x] Verificar cuenta regresiva (`Countdown`) al 2026-11-07 17:30 CST.
+      `WEDDING_TARGET = 2026-11-07T17:30:00-06:00` → correcto.
+- [x] Nav en móvil. Se **quitó el botón de menú** (no aportaba) y se sustituyó por
+      la fecha. Es un sitio de scroll único, no requiere anclas de navegación.
 
 ## Fase 2 — Sección "Nuestra historia" (Night + Boda)
 
-- [ ] Textos reales de la historia (primera cita / la pedida).
+- [~] Textos reales de la historia (primera cita / la pedida). Se **reescribió** la
+      sección que decía *"Ninguno de los dos quería cenar"* (contradictoria) por
+      *"Una cena que lo cambió todo"*. **Falta la redacción definitiva** de la
+      pareja (ver Decisiones pendientes).
 - [x] Fotos reales: `nosotros-cena.jpg`, `propuesta.jpg`, `anillo-flores.jpg`.
-- [ ] Ajuste fino de estilo sin alterar la identidad del diseño.
-Nota: Hay que cambiar el texto de toda la seccion de ninguno de los dos quería cenar. 
+- [~] Ajuste fino de estilo sin alterar la identidad del diseño.
+
 ## Fase 3 — Logística: Plan + Venue + Stay
 
 - [x] Agenda del evento (horarios) en `Plan`.
 - [x] `Venue`: foto real (`hacienda.webp`), dirección y **mapa / cómo llegar**
-      (enlace o embed de Google Maps).
-- [ ] `Stay`: opciones de hospedaje.  nota: cambiar por air b&b baratos para familias grandes cerca de la zona.
-- [ ] **Código de vestimenta (dress code)** — ubicar en la sección adecuada. 
-- [x] **Aviso "solo adultos / sin niños"** — comunicarlo con tacto en la sección
-      adecuada (ver política en `mission.md`).
-Nota: quiero un form con cada invitado por asociado a la familia indicando si asistiran. enfasis en invitado principal. dropdawn con restricciones alimentarias, que se activan solo si tienen alguna, es decir algun checkbox por ejemplo al presionar confirmar mandar un alert antes de la animacion para confirmar quien va y quien no. 
-Quitar el boton de menu, no sirve de nada. 
-Quitar estas invidat@ en carta al inicio. 
-Mejorar todo el responsive de la version desktop. Texto centrado, etc. 
+      (enlace a Google Maps).
+- [x] `Stay`: cambiado a **Airbnb económicos y amplios para familias grandes** cerca
+      de la zona (tarjetas ahora enlazan a búsquedas por zona).
+      **Falta fijar casas concretas** recomendadas (ver Next steps).
+- [x] **Código de vestimenta (dress code)** — colocado como bloque propio y claro
+      dentro de `Plan` ("Formal" + guía).
+- [x] **Aviso "solo adultos / sin niños"** — comunicado con tacto en el RSVP.
+- [x] **Formulario RSVP por invitado (UI, sin persistencia).** Cada miembro del
+      grupo con toggle **Sí/No** (énfasis visual en el invitado principal),
+      **dropdown de restricciones alimentarias** que solo aparece al marcar el
+      checkbox, **+1 opcional** (primero activa el acompañante, luego nombre y
+      restricciones), y **`window.confirm` con el resumen quién va / quién no**
+      antes de la animación. La persistencia contra el token es Fase 5.
+- [x] **Quitar el botón de menú** del nav (no servía).
+- [x] **Quitar "Estás invitad@"** de la carta inicial (`Opener`).
+- [~] **Mejorar el responsive de escritorio** (texto centrado, etc.). Form RSVP
+      centrado y nuevos bloques encajados en la columna; **falta un pase completo**
+      de tipografía/centrado de escritorio con el ojo del cliente (ver Next steps).
 
 ## Fase 4 — Mesa de regalos (Gifts)
 
-- [ ] Enlaces reales: lista de regalos / transferencia / sobre digital.
-- [ ] Copys y estilo de la sección `Gifts`.
-- [ ] Todos los enlaces salientes verificados (sin backend). nota: crear backend
+- [~] Copys y estilo de la sección `Gifts` (regalo en efectivo para luna de miel).
+- [ ] Enlaces reales: lista de regalos / transferencia / **sobre digital**.
+- [ ] Todos los enlaces salientes verificados. El **sobre digital** requiere
+      backend (ver Fase 5 y Stoppers).
 
 ## Fase 5 — RSVP (requiere decisión de backend)
 
-> Bloqueada por la decisión de `tech-stack.md` (dónde vive la API y cómo convive
-> con el despliegue estático de Hostinger). Resolver **antes** de construir.
+> Backend natural: **API routes de Next.js** (`app/api/*`), al correr ya como app
+> Node en Hostinger. Falta elegir la **capa de datos** (ver `tech-stack.md`).
 
-- [ ] Elegir y documentar la solución de backend (VPS Node / serverless / BaaS).
-- [ ] **Acceso por token en enlace único** (`?i=<token>`): al cargar, leer el
-      query param y resolver el invitado contra el backend.  nota: Token único por invitado, En vez de JWT usaría un UUID. en bd: quiero el invitado principal con un nombre o descripcion, por ejemplo "Familia Curiel-Ramirez" o "Norma Curiel". Ellos tendrán una lista de invitados determinadas en algunos casos: Menor: "Sofia Curiel", f, 12, menor. O  alguien sin nombre establecido pero con datos a llenar en form, algunos tendrán la opcion de llevar más uno. En el form llenaran primero si activan su opcion de más uno. Luego el nombre y restricciones alimentarias.
-	    Guests
-		id
-		family
-		token
-		confirmed
-		adults
-		children
-		table
-		openedAt
-		Esto te permite:
-
-- Ver quién abrió la invitación.
-- Saber quién confirmó.
-- Mostrar distintos nombres.
-- Limitar asistentes.
-- Incluso revocar un enlace si fuera necesario.
-  
-  
-  
-- [ ] **Bloqueo total del sitio**: sin token válido, mostrar pantalla de acceso;
-      no renderizar el contenido. nota: crear una pantalla que muestre una imagen que yo agregaré (sigue el modelo que hemos usado para colocar imagenes con la guia de imagenes .md )
-- [ ] Modelo de datos: `Invitado` (token único, nombre, **nº de lugares — solo
-      adultos**) + `Confirmación` (asistencia, nº que asisten, restricciones
-      alimentarias, mensaje). **Sin acompañantes menores.**
-- [ ] Formulario `Rsvp` conectado que persiste respuestas contra el token.
-- [ ] Validación (no exceder los lugares reservados), estados de éxito/error y
-      confirmación al invitado.
+- [x] **Modelo de datos documentado** en `tech-stack.md`: **token = UUID** opaco
+      (no JWT); `Guest` (grupo/enlace con etiqueta libre, p. ej. "Familia
+      Curiel-Ramírez") + `GuestMember` (nombre fijo o a llenar, `allowPlusOne`,
+      `attending`, `diet`, +1). Campos `openedAt`/`confirmed`/`table`/`role`.
+- [ ] Elegir y documentar la **capa de datos** (DB gestionada + Route Handlers vs.
+      BaaS). *Decisión pendiente — bloquea el resto de la fase.*
+- [ ] **Acceso por token en enlace único** (`?i=<uuid>`): leer el query param y
+      resolver el grupo contra el backend; inyectarlo en `window.__PARTY__`.
+- [ ] **Bloqueo total del sitio**: sin token válido, pantalla de acceso con una
+      **imagen** (a aportar por el cliente, siguiendo `IMAGENES-PENDIENTES.md`); no
+      renderizar el contenido.
+- [ ] Formulario `Rsvp` **conectado** que persiste respuestas contra el token
+      (la UI ya existe; falta el `POST /api/rsvp`).
+- [ ] Validación de aforo (no exceder lugares reservados), estados de éxito/error.
 - [ ] Panel/proceso para los novios: **carga de invitados**, **generación de
-      tokens** y **export de la lista de enlaces** para repartir.
-- [ ] Vista/export de **conteo de confirmaciones** para los novios. nota: considerar usuarios y vistas de estos 3: novios, proveedores, invitados. Para incluir en sus tokens y vistas. 
+      tokens (UUID)** y **export de la lista de enlaces**.
+- [ ] Vista/export de **conteo de confirmaciones**. Considerar **tres roles**:
+      novios, proveedores, invitados (alcance de cada vista por definir).
 
 ## Fase 6 — Valores, cierre y pulido
 
 - [ ] Sección `Values` con contenido final.
 - [ ] `Footer` con datos de contacto/agradecimiento.
-- [ ] Revisar animación del gato (`CatWalker`) en todas las secciones. 
-	- [ ] nota quiero probar la idea de que el gato solo mueva los puies mientras camina
-	- [ ] nota: quiero que se vea un camino que recorre el gato mientras avanza entre secciones 
-	- [ ] nota quiero que el scroll sea por seccion completa con un efecto que siga el cadaver de la novia. 
-	- [ ] nota, quiero que el gato tenga reacciones al hacer selecciones en el confirmar asistencia o inivtados que no iran. 
-
+- [~] Revisar animación del gato (`CatWalker`) en todas las secciones:
+  - [x] El gato **solo mueve las patas mientras camina** (al hacer scroll); en
+        reposo queda de pie (cola y parpadeo siguen).
+  - [x] Se ve un **camino** (`.cat-path`) que recorre el gato al avanzar.
+  - [x] **Scroll por sección** con `scroll-snap` (proximity, ≥768px) — *experimental*,
+        requiere QA (ver Stoppers).
+  - [x] El gato **reacciona** a las selecciones del RSVP (`happy`/`sad`/`party`) vía
+        evento `cat:react`.
 
 ## Fase 7 — Calidad y lanzamiento
 
@@ -114,5 +118,56 @@ Mejorar todo el responsive de la version desktop. Texto centrado, etc.
 ## Notas de dependencias
 
 - Las Fases 1–4 y 6 son **estáticas** y pueden avanzar en cualquier orden.
-- La **Fase 5 (RSVP)** es la única que introduce backend: no empezar a codificar
-  hasta cerrar la decisión de infraestructura en `tech-stack.md`.
+- La **Fase 5 (RSVP)** es la única que introduce backend: no persistir respuestas
+  hasta cerrar la **capa de datos** en `tech-stack.md`.
+
+## Stoppers (bloqueos actuales)
+
+1. **Capa de datos del RSVP sin elegir.** Bloquea persistir el formulario, el
+   bloqueo por token, el panel de novios y el conteo. Backend = API routes de
+   Next; falta decidir DB gestionada vs. BaaS. *(Fase 5)*
+2. **Enlaces reales de regalos / sobre digital.** No hay URLs ni cuenta; el sobre
+   digital probablemente requiere backend. *(Fase 4)*
+3. **Casas de Airbnb concretas.** Hoy son enlaces de búsqueda por zona; faltan las
+   propiedades recomendadas definitivas. *(Fase 3)*
+4. **Imagen de la pantalla de bloqueo** (acceso sin token) a aportar por el cliente.
+   *(Fase 5)*
+5. **`scroll-snap` por sección es experimental.** Puede sentirse brusco con
+   secciones más altas que el viewport; requiere QA en móvil/escritorio y decidir
+   si se mantiene, se suaviza o se descarta. *(Fase 6)*
+6. **Fotos reales definitivas** (nítidas a ~1200px para hero y hacienda) siguen
+   pendientes según `IMAGENES-PENDIENTES.md`. *(Fase 0/1)*
+
+## Next steps (siguiente iteración sugerida)
+
+1. **Elegir la capa de datos** y documentarla en `tech-stack.md` (desbloquea Fase 5).
+2. Implementar `app/api/rsvp` (GET resolver token → `window.__PARTY__`, POST
+   persistir) y el **bloqueo por token** + pantalla de acceso.
+3. **Pase de responsive de escritorio** completo (centrado/tipografía) con revisión
+   del cliente, sin romper la identidad del diseño.
+4. Redacción **definitiva de la historia** (pareja) y del copy final de `Values`.
+5. Fijar **casas de Airbnb** y **enlaces de regalos** reales.
+6. QA del `scroll-snap` y de las reacciones del gato en dispositivos reales.
+
+## Decisiones pendientes
+
+1. **Política de menores.** `mission.md` fija *solo adultos*, pero la nota del
+   cliente incluye un ejemplo con miembro `menor`. Reconciliar copy (solo adultos)
+   vs. modelo de datos (admite `type: menor`) antes de construir el backend.
+2. **Capa de datos**: DB gestionada (Postgres/SQLite en Hostinger, Neon/Supabase-DB)
+   con Route Handlers **vs.** BaaS (Supabase/Firebase).
+3. **Roles y vistas**: alcance concreto de las vistas **novios / proveedores /
+   invitados** y qué ve/puede cada token.
+4. **`?i=<token>` vs. ruta `/i/<token>`**: se mantiene query param salvo necesidad.
+5. **Mantener o no el `scroll-snap`** por sección tras el QA.
+
+
+
+
+
+
+
+
+
+
+

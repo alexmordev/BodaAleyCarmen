@@ -1,6 +1,15 @@
 'use client'
 // === Wedding site — réplica fiel del diseño "Alejandro & Carmen" (Claude Design) ===
 import React, { useEffect, useRef, useState } from 'react'
+import gsap from 'gsap'
+import { useGSAP } from '@gsap/react'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import { CustomEase } from 'gsap/CustomEase'
+
+gsap.registerPlugin(useGSAP, ScrollTrigger, CustomEase)
+
+// Réplica exacta del easing del diseño: cubic-bezier(.2,.7,.2,1).
+const REVEAL_EASE = CustomEase.create('reveal', 'M0,0 C0.2,0.7 0.2,1 1,1')
 
 // Imágenes servidas desde /public/images (Next.js sirve /public en la raíz).
 const imgSillon = '/images/nosotros-sillon.jpg'
@@ -48,7 +57,7 @@ function Opener() {
   return (
     <div className={`opener ${opened ? 'opened' : ''}`}>
       <div className="halo"></div>
-      <div className="op-kicker">Estás invitad@ · 07 · XI · 2026</div>
+      <div className="op-kicker">07 · XI · 2026</div>
       <div className="env-stage">
         <div
           className={`env ${go ? 'go' : ''}`}
@@ -104,16 +113,18 @@ function Song({ href, title, subtitle, style }) {
 // --- Nav ---
 function Nav() {
   const [scrolled, setScrolled] = useState(false)
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20)
-    window.addEventListener('scroll', onScroll, { passive: true })
-    onScroll()
-    return () => window.removeEventListener('scroll', onScroll)
+  useGSAP(() => {
+    setScrolled(window.scrollY > 20)
+    ScrollTrigger.create({
+      start: 0,
+      end: 'max',
+      onUpdate: (self) => setScrolled(self.scroll() > 20),
+    })
   }, [])
   return (
     <nav className={`nav ${scrolled ? 'scrolled' : ''}`}>
       <div className="logo">A<span className="amp">&amp;</span>C</div>
-      <button className="menu" aria-label="Menú"><i></i><i></i><i></i></button>
+      <div className="nav-date">07 · XI · 2026</div>
     </nav>
   )
 }
@@ -168,8 +179,8 @@ function Night() {
 
       <div className="divider reveal"><span>La pregunta · Valle de Bravo</span></div>
 
-      <h2 className="reveal" style={{ marginTop: 34 }}>Ninguno de los dos<br /><em>quería cenar.</em></h2>
-      <p className="lead reveal">Pero dije &ldquo;vamos a cenar&rdquo; y ella dijo que sí. Arriba estaba todo listo: la mesa, las velas, las flores, la bocina. Puse la canción, ella entró y empezó a llorar. Yo temblaba. Entonces dije las palabras que siempre soñó escuchar.</p>
+      <h2 className="reveal" style={{ marginTop: 34 }}>Una cena<br /><em>que lo cambió todo.</em></h2>
+      <p className="lead reveal">Arriba estaba todo listo: la mesa, las velas, las flores, la bocina esperando. Puse la canción, ella entró y empezó a llorar. Yo temblaba. Entonces dije las palabras que siempre soñó escuchar.</p>
       <div className="twin reveal">
         <img src={imgPropuesta} alt="La propuesta" />
         <img src={imgAnillo} alt="El anillo y las lilis" />
@@ -220,7 +231,11 @@ function Plan() {
           </div>
         ))}
       </div>
-      <p className="lead reveal" style={{ marginTop: 22 }}>Código de vestimenta: formal. Un consejo de corazón — trae unos tenis en la bolsa para la pista.</p>
+      <div className="dresscode reveal">
+        <div className="tag">Código de vestimenta</div>
+        <p className="big">Formal</p>
+        <p className="small">Ellas, vestido largo o cóctel; ellos, traje. Un consejo de corazón: trae unos tenis en la bolsa para cuando se abra la pista.</p>
+      </div>
     </section>
   )
 }
@@ -239,30 +254,32 @@ function Venue() {
 }
 
 // --- Hospedaje ---
+// Opciones de Airbnb económicas y amplias, pensadas para familias grandes que
+// viajan juntas. Los enlaces son de búsqueda por zona hasta fijar casas concretas.
 function Stay() {
-  const hotels = [
-    ['1', 'Fiesta Inn Perisur', 'Aprox. 15 min · Zona sur', 'Cómodo y confiable, ideal para venir en familia.'],
-    ['2', 'City Express Insurgentes Sur', 'Aprox. 20 min · Céntrico', 'Práctico y bien ubicado, perfecto para una noche.'],
-    ['3', 'Radisson Paraíso Perisur', 'Aprox. 15 min · Zona sur', 'Un poco más de lujo para consentirse el fin de semana.'],
+  const stays = [
+    ['1', 'Casa amplia en Xochimilco', 'Aprox. 10 min · Hasta 10 personas', 'Casa completa con varias recámaras: ideal para que toda la familia se hospede junta y reparta el costo.', 'https://www.airbnb.mx/s/Xochimilco--CDMX/homes?adults=8&room_types%5B%5D=Entire%20home%2Fapt'],
+    ['2', 'Departamento familiar zona sur', 'Aprox. 15 min · Hasta 6 personas', 'Económico y bien ubicado, perfecto para un grupo mediano que quiere estar cerca de la hacienda.', 'https://www.airbnb.mx/s/Tlalpan--CDMX/homes?adults=6&room_types%5B%5D=Entire%20home%2Fapt'],
+    ['3', 'Casa con jardín para grupos', 'Aprox. 20 min · Hasta 12 personas', 'Espacio grande con áreas comunes: la opción más rendidora si vienen muchos primos y tíos.', 'https://www.airbnb.mx/s/Coyoacan--CDMX/homes?adults=10&room_types%5B%5D=Entire%20home%2Fapt'],
   ]
   return (
     <section className="stay" data-screen-label="Hospedaje">
       <div className="k reveal">Cerca, para que se queden</div>
       <h2 className="reveal">Dónde<br /><em>quedarse.</em></h2>
-      <p className="lead reveal" style={{ marginBottom: 12 }}>Si vienes de fuera, aquí tres opciones cerca de la hacienda para que la fiesta te quede a un paso.</p>
+      <p className="lead reveal" style={{ marginBottom: 12 }}>Si vienes de fuera y con toda la familia, estas son <b>casas y departamentos completos en Airbnb</b> cerca de la hacienda — económicos y amplios para que se hospeden juntos y compartan gastos.</p>
       <div className="stay-list" style={{ marginTop: 14 }}>
-        {hotels.map(([no, name, meta, desc]) => (
-          <div key={no} className="hotel reveal">
+        {stays.map(([no, name, meta, desc, href]) => (
+          <a key={no} className="hotel reveal" href={href} target="_blank" rel="noopener">
             <span className="no">{no}</span>
             <div>
               <h3>{name}</h3>
               <div className="meta">{meta}</div>
               <p>{desc}</p>
             </div>
-          </div>
+          </a>
         ))}
       </div>
-      <p className="note reveal">Sugerencias cerca de la hacienda · confirmaremos tarifas y código de descuento pronto.</p>
+      <p className="note reveal">Enlaces de búsqueda por zona · fijaremos casas concretas recomendadas pronto.</p>
     </section>
   )
 }
@@ -353,21 +370,169 @@ function useConfetti(canvasRef) {
 }
 
 // --- RSVP ---
+// Opciones del dropdown de restricciones alimentarias (solo se muestra si el
+// invitado marca que tiene alguna).
+const DIET_OPTIONS = [
+  'Vegetariano',
+  'Vegano',
+  'Sin gluten / celíaco',
+  'Alergia (especificar)',
+  'Otra (especificar)',
+]
+
+// Estructura del "party" (grupo del invitado). En producción la inyecta el
+// backend en window.__PARTY__ tras resolver el token (?i=<uuid>). Mientras no
+// haya backend, se deriva un grupo mínimo del nombre del invitado.
+//   party = {
+//     family: 'Familia Curiel-Ramírez',   // descripción del enlace
+//     allowPlusOne: false,                 // ¿pueden llevar +1?
+//     guests: [
+//       { id, name, principal?, editable? } // editable => nombre a llenar en el form
+//     ],
+//   }
+function getParty() {
+  const injected = typeof window !== 'undefined' && window.__PARTY__
+  if (injected && Array.isArray(injected.guests) && injected.guests.length) return injected
+  const guest = getGuestName()
+  return {
+    family: guest,
+    allowPlusOne: false,
+    guests: [{ id: 'p', name: guest, principal: true }],
+  }
+}
+
+function initResponses(party) {
+  const r = {}
+  party.guests.forEach((g) => {
+    r[g.id] = { attending: null, name: g.editable ? '' : g.name, hasDiet: false, diet: '' }
+  })
+  return r
+}
+
+// Fila de un invitado en el formulario.
+function GuestRow({ guest, value, onChange, onReact }) {
+  const setAttend = (v) => { onChange({ attending: v }); onReact(v ? 'happy' : 'sad') }
+  return (
+    <div className={`grow ${guest.principal ? 'principal' : ''}`}>
+      <div className="grow-top">
+        <div className="who">
+          {guest.editable ? (
+            <input
+              className="name-in"
+              type="text"
+              placeholder="Nombre del invitado"
+              value={value.name}
+              onChange={(e) => onChange({ name: e.target.value })}
+            />
+          ) : (
+            <span className="name">{guest.name}</span>
+          )}
+          {guest.principal && <span className="badge">Invitado principal</span>}
+        </div>
+        <div className="yn" role="group" aria-label={`¿Asistirá ${guest.name}?`}>
+          <button type="button" className={`yn-b yes ${value.attending === true ? 'on' : ''}`} onClick={() => setAttend(true)}>Sí</button>
+          <button type="button" className={`yn-b no ${value.attending === false ? 'on' : ''}`} onClick={() => setAttend(false)}>No</button>
+        </div>
+      </div>
+      {value.attending === true && (
+        <div className="grow-diet">
+          <label className="chk-line">
+            <input type="checkbox" checked={value.hasDiet} onChange={(e) => onChange({ hasDiet: e.target.checked, diet: '' })} />
+            <span>Tiene alguna restricción alimentaria</span>
+          </label>
+          {value.hasDiet && (
+            <select className="diet-sel" value={value.diet} onChange={(e) => onChange({ diet: e.target.value })}>
+              <option value="">Selecciona…</option>
+              {DIET_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
+            </select>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function Rsvp() {
-  const [guest] = useState(getGuestName)
+  const [party] = useState(getParty)
+  const [resp, setResp] = useState(() => initResponses(party))
+  const [plus, setPlus] = useState({ enabled: false, name: '', hasDiet: false, diet: '' })
+  const [open, setOpen] = useState(false)      // modal "¿Quién asiste?" abierto
+  const [step, setStep] = useState('form')     // 'form' | 'review' (leyenda de repaso)
+  const [summary, setSummary] = useState({ going: [], notGoing: [] })
   const [done, setDone] = useState(false)
   const [pulse, setPulse] = useState(false)
-  const btnRef = useRef(null)
+  const [declined, setDeclined] = useState(false)
+  const btnRef = useRef(null)                  // botón que dispara el modal (origen del confeti)
   const canvasRef = useRef(null)
   const burst = useConfetti(canvasRef)
 
-  const confirm = () => {
+  const setGuest = (id, patch) => setResp((r) => ({ ...r, [id]: { ...r[id], ...patch } }))
+  const react = (mood) => {
+    if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('cat:react', { detail: { mood } }))
+  }
+
+  // Bloquea el scroll del body mientras el cuadro emergente está abierto y
+  // permite cerrarlo con la tecla Escape.
+  useEffect(() => {
+    if (!open) return
+    document.body.classList.add('modal-open')
+    const onKey = (e) => { if (e.key === 'Escape') setOpen(false) }
+    window.addEventListener('keydown', onKey)
+    return () => {
+      document.body.classList.remove('modal-open')
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [open])
+
+  // Paso 1 → 2: valida el formulario y arma la leyenda de repaso (reemplaza al
+  // antiguo window.confirm nativo).
+  const review = () => {
     if (done) return
+
+    // Validación: todos deben tener respuesta Sí/No.
+    const pending = party.guests.filter((g) => resp[g.id].attending == null)
+    if (pending.length) {
+      window.alert('Por favor indica para cada invitado si asistirá o no antes de confirmar.')
+      return
+    }
+    // Nombres sin llenar en invitados editables.
+    const missingName = party.guests.find((g) => g.editable && resp[g.id].attending && !resp[g.id].name.trim())
+    if (missingName) { window.alert('Escribe el nombre de cada invitado que asistirá.'); return }
+    if (plus.enabled && !plus.name.trim()) { window.alert('Escribe el nombre de tu acompañante.'); return }
+
+    // Construir resumen quién va / quién no ({ name, note, diet }).
+    const going = []
+    const notGoing = []
+    party.guests.forEach((g) => {
+      const r = resp[g.id]
+      const name = (g.editable ? r.name.trim() : g.name) || g.name
+      if (r.attending) going.push({ name, diet: r.hasDiet && r.diet ? r.diet : '' })
+      else notGoing.push({ name })
+    })
+    if (plus.enabled && plus.name.trim()) {
+      going.push({ name: plus.name.trim(), note: 'acompañante', diet: plus.hasDiet && plus.diet ? plus.diet : '' })
+    }
+
+    setSummary({ going, notGoing })
+    setStep('review')
+  }
+
+  // Paso 2: envía la confirmación y dispara la animación.
+  const submit = () => {
+    if (done) return
+
+    // TODO(backend): POST /api/rsvp con { token, resp, plus }. Sin backend aún,
+    // solo se ejecuta la animación local.
+    const anyGoing = summary.going.length > 0
+    setDeclined(!anyGoing)
+    setOpen(false)          // cerrar el cuadro emergente
     setDone(true)
     setPulse(true)
     setTimeout(() => setPulse(false), 600)
+    react(anyGoing ? 'party' : 'sad')
+
     const reduce = window.matchMedia('(prefers-reduced-motion:reduce)').matches
-    if (!reduce && btnRef.current) {
+    if (anyGoing && !reduce && btnRef.current) {
       const r = btnRef.current.getBoundingClientRect()
       burst(r.left + r.width / 2, r.top + r.height / 2)
       setTimeout(() => {
@@ -383,35 +548,173 @@ function Rsvp() {
       <div className="eyebrow reveal" style={{ color: 'var(--lila)', marginBottom: 16 }}>Confirmación</div>
       <h2 className="reveal">¿Nos acompañas?</h2>
       <p className="invita reveal">
-        <b>{guest}, este día no sería lo mismo sin ustedes.</b>
+        <b>{party.family}, este día no sería lo mismo sin ustedes.</b>
       </p>
       <p className="invita reveal">
-        Con mucho cariño hemos preparado esta celebración pensando en cada uno
-        de nuestros invitados. Por ello, <b>esta invitación es válida únicamente
-        para las personas indicadas en ella.</b> Les agradecemos su comprensión,
-        ya que por cuestiones de organización <b>no podremos recibir invitados
-        adicionales.</b>
+        Esta invitación es válida únicamente para las personas indicadas abajo.
+        Les agradecemos su comprensión, ya que por cuestiones de organización
+        <b> no podremos recibir invitados adicionales.</b>
       </p>
       <p className="invita adultos reveal">
         Con mucho cariño, esta celebración será <b>exclusiva para adultos.</b>
         <br />Por respeto y cuidado de las infancias.
       </p>
+
       <button
         ref={btnRef}
         type="button"
         className={`btn reveal ${done ? 'done' : ''} ${pulse ? 'pulse' : ''}`}
-        onClick={confirm}
+        onClick={() => { setStep('form'); setOpen(true) }}
+        style={done ? { display: 'none' } : undefined}
       >
-        <span className="lbl">Confirmar asistencia</span>
+        <span className="lbl">¿Quién asiste?</span>
         <svg className="chk" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" /></svg>
       </button>
       <p className="fine reveal" style={done ? { opacity: 0 } : undefined}>Agradecemos tu respuesta antes del 15 de octubre 2026</p>
+
+      {/* Cuadro emergente: ¿Quién asiste? */}
+      {open && (
+        <div className="rsvp-modal" role="dialog" aria-modal="true" aria-labelledby="rsvp-modal-title" onClick={() => setOpen(false)}>
+          <div className="rsvp-dialog" onClick={(e) => e.stopPropagation()}>
+            <div className="rsvp-dialog-head">
+              <div>
+                <div className="rsvp-dialog-k">Confirmación</div>
+                <h3 id="rsvp-modal-title">{step === 'review' ? 'Confirma tu respuesta' : '¿Quién asiste?'}</h3>
+              </div>
+              <button type="button" className="rsvp-close" aria-label="Cerrar" onClick={() => setOpen(false)}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
+              </button>
+            </div>
+
+            <div className="rsvp-dialog-body">
+              {step === 'form' ? (
+                <>
+                  <p className="rsvp-dialog-note">Indícanos quién de tu grupo nos acompañará y si tiene alguna restricción alimentaria.</p>
+                  <div className="rsvp-form">
+                    {party.guests.map((g) => (
+                      <GuestRow
+                        key={g.id}
+                        guest={g}
+                        value={resp[g.id]}
+                        onChange={(patch) => setGuest(g.id, patch)}
+                        onReact={react}
+                      />
+                    ))}
+
+                    {party.allowPlusOne && (
+                      <div className="grow plusone">
+                        <label className="chk-line">
+                          <input
+                            type="checkbox"
+                            checked={plus.enabled}
+                            onChange={(e) => { setPlus((p) => ({ ...p, enabled: e.target.checked })); react(e.target.checked ? 'happy' : 'sad') }}
+                          />
+                          <span>Llevaré un acompañante</span>
+                        </label>
+                        {plus.enabled && (
+                          <>
+                            <input
+                              className="name-in"
+                              type="text"
+                              placeholder="Nombre de tu acompañante"
+                              value={plus.name}
+                              onChange={(e) => setPlus((p) => ({ ...p, name: e.target.value }))}
+                            />
+                            <div className="grow-diet">
+                              <label className="chk-line">
+                                <input type="checkbox" checked={plus.hasDiet} onChange={(e) => setPlus((p) => ({ ...p, hasDiet: e.target.checked, diet: '' }))} />
+                                <span>Tiene alguna restricción alimentaria</span>
+                              </label>
+                              {plus.hasDiet && (
+                                <select className="diet-sel" value={plus.diet} onChange={(e) => setPlus((p) => ({ ...p, diet: e.target.value }))}>
+                                  <option value="">Selecciona…</option>
+                                  {DIET_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
+                                </select>
+                              )}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <div className="rsvp-review">
+                  <p className="rsvp-dialog-note">Revisa que todo esté bien antes de enviarnos tu respuesta.</p>
+                  {summary.going.length > 0 && (
+                    <div className="rev-group">
+                      <div className="rev-group-h yes">
+                        <span className="rev-ic" aria-hidden="true">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7" /></svg>
+                        </span>
+                        Asistirán ({summary.going.length})
+                      </div>
+                      <ul className="rev-list">
+                        {summary.going.map((p, i) => (
+                          <li key={`g${i}`}>
+                            <span className="rev-name">
+                              {p.name}
+                              {p.note && <span className="rev-tag">{p.note}</span>}
+                            </span>
+                            {p.diet && <span className="rev-diet">{p.diet}</span>}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {summary.notGoing.length > 0 && (
+                    <div className="rev-group">
+                      <div className="rev-group-h no">
+                        <span className="rev-ic" aria-hidden="true">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
+                        </span>
+                        No podrán ({summary.notGoing.length})
+                      </div>
+                      <ul className="rev-list">
+                        {summary.notGoing.map((p, i) => (
+                          <li key={`n${i}`}><span className="rev-name">{p.name}</span></li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="rsvp-dialog-foot">
+              {step === 'form' ? (
+                <button type="button" className="btn" onClick={review}>
+                  <span className="lbl">Continuar</span>
+                </button>
+              ) : (
+                <div className="rsvp-foot-actions">
+                  <button type="button" className="btn ghost" onClick={() => setStep('form')}>
+                    <span className="lbl">Volver a editar</span>
+                  </button>
+                  <button type="button" className="btn" onClick={submit}>
+                    <span className="lbl">Enviar confirmación</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
       <div className={`confirmed ${done ? 'show' : ''}`}>
         <div className="seal-ok">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7" /></svg>
         </div>
-        <p className="msg">¡Ahí <em>estaremos</em>!<br />Gracias por decir que sí.</p>
-        <p className="msg-sub">Nos vemos el 7 de noviembre</p>
+        {declined ? (
+          <>
+            <p className="msg">Gracias por <em>avisarnos</em>.<br />Los vamos a extrañar.</p>
+            <p className="msg-sub">Con cariño, Alejandro &amp; Carmen</p>
+          </>
+        ) : (
+          <>
+            <p className="msg">¡Ahí <em>estaremos</em>!<br />Gracias por decir que sí.</p>
+            <p className="msg-sub">Nos vemos el 7 de noviembre</p>
+          </>
+        )}
       </div>
       <canvas id="confetti" ref={canvasRef}></canvas>
     </section>
@@ -432,18 +735,56 @@ function Footer() {
 // --- Gato estilo "El Cadáver de la Novia" ---
 function CatWalker() {
   const ref = useRef(null)
+  const wrapRef = useRef(null)
+
+  // Camina (mueve las patas) solo mientras hay scroll; se detiene al quedar quieto.
+  // La posición horizontal (6% → 78%) va enganchada al progreso de scroll con
+  // scrub; el respeto a prefers-reduced-motion se delega en gsap.matchMedia.
+  useGSAP(() => {
+    let idle = null
+    const mm = gsap.matchMedia()
+    mm.add('(prefers-reduced-motion: no-preference)', () => {
+      gsap.to(ref.current, {
+        left: '78%',
+        ease: 'none',
+        scrollTrigger: {
+          start: 0,
+          end: 'max',
+          scrub: 0.3,
+          onUpdate: () => {
+            const el = wrapRef.current
+            if (!el) return
+            el.classList.add('walking')
+            clearTimeout(idle)
+            idle = setTimeout(() => wrapRef.current && wrapRef.current.classList.remove('walking'), 180)
+          },
+        },
+      })
+    })
+    return () => clearTimeout(idle)
+  }, { scope: wrapRef })
+
+  // Reacciones ante las selecciones del RSVP (happy / sad / party).
   useEffect(() => {
-    const onScroll = () => {
-      const max = Math.max(1, document.body.scrollHeight - window.innerHeight)
-      const f = Math.min(1, Math.max(0, window.scrollY / max))
-      if (ref.current) ref.current.style.left = (6 + f * 72) + '%'
+    let t = null
+    const onReact = (e) => {
+      const mood = (e.detail && e.detail.mood) || 'happy'
+      const el = wrapRef.current
+      if (!el) return
+      el.classList.remove('react-happy', 'react-sad', 'react-party')
+      // reflow para reiniciar la animación aunque sea el mismo mood
+      void el.offsetWidth
+      el.classList.add('react-' + mood)
+      clearTimeout(t)
+      t = setTimeout(() => el && el.classList.remove('react-happy', 'react-sad', 'react-party'), mood === 'party' ? 1600 : 900)
     }
-    window.addEventListener('scroll', onScroll, { passive: true })
-    onScroll()
-    return () => window.removeEventListener('scroll', onScroll)
+    window.addEventListener('cat:react', onReact)
+    return () => { window.removeEventListener('cat:react', onReact); clearTimeout(t) }
   }, [])
+
   return (
-    <div className="catwrap" aria-hidden="true">
+    <div className="catwrap" ref={wrapRef} aria-hidden="true">
+      <div className="cat-path"></div>
       <svg ref={ref} className="cat" viewBox="0 0 100 96" fill="none" xmlns="http://www.w3.org/2000/svg">
         <g className="tail">
           <path d="M14 66 C 2 62, 0 44, 8 34 C 12 29, 20 30, 20 37 C 20 43, 12 43, 12 50 C 12 58, 22 60, 26 62 Z" fill="#6E5497" stroke="#3A2F48" strokeWidth="1.5" />
@@ -474,19 +815,49 @@ function CatWalker() {
 }
 
 export default function WeddingApp() {
-  // Reveal-on-scroll (idéntico al script del diseño)
-  useEffect(() => {
-    const io = new IntersectionObserver((entries) => {
-      entries.forEach((e) => {
-        if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target) }
+  // Scroll con GSAP: reveal-on-scroll (mismo fade+translateY y stagger que el
+  // diseño) + parallax sutil en las imágenes con contenedor overflow:hidden.
+  useGSAP(() => {
+    document.documentElement.classList.add('js-gsap')
+    const mm = gsap.matchMedia()
+
+    mm.add('(prefers-reduced-motion: no-preference)', () => {
+      // Reveal: se anima por lotes al entrar en viewport, con stagger de 70 ms.
+      ScrollTrigger.batch('.reveal', {
+        start: 'top 88%',
+        once: true,
+        onEnter: (batch) => gsap.to(batch, {
+          opacity: 1,
+          y: 0,
+          duration: 0.8,
+          ease: REVEAL_EASE,
+          stagger: 0.07,
+          overwrite: true,
+        }),
       })
-    }, { threshold: 0.12 })
-    const els = document.querySelectorAll('.reveal')
-    els.forEach((el, i) => {
-      el.style.transitionDelay = (Math.min(i % 4, 3) * 70) + 'ms'
-      io.observe(el)
+
+      // Parallax sutil. Solo imágenes cuyo contenedor recorta el desborde
+      // (.heroimg y .night .imgfull); se escalan un pelín para no ver bordes.
+      gsap.utils.toArray('.heroimg img, .night .imgfull img').forEach((img) => {
+        gsap.set(img, { scale: 1.12 })
+        gsap.fromTo(img,
+          { yPercent: -6 },
+          {
+            yPercent: 6,
+            ease: 'none',
+            scrollTrigger: { trigger: img, start: 'top bottom', end: 'bottom top', scrub: 0.4 },
+          },
+        )
+      })
     })
-    return () => io.disconnect()
+
+    // El opener bloquea el scroll (~3.4 s); al liberarlo cambia la altura útil,
+    // así que recalculamos las medidas de ScrollTrigger.
+    const refresh = setTimeout(() => ScrollTrigger.refresh(), 3600)
+    return () => {
+      clearTimeout(refresh)
+      document.documentElement.classList.remove('js-gsap')
+    }
   }, [])
 
   return (

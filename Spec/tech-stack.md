@@ -62,12 +62,58 @@ Decisión tomada con el cliente (ver `mission.md` → *Acceso por invitación*):
 
 ## Datos (RSVP)
 
-- Entidad `Invitado`: **token** (único), nombre, **nº de lugares reservados (solo
-  adultos)**, y su `Confirmación`: asistencia (sí/no), nº que asisten,
-  restricciones alimentarias, mensaje.
-- **Sin opción de acompañantes menores** (política *solo adultos*, ver `mission.md`).
+### Modelo de datos (decidido con el cliente)
+
+El **token es un UUID** opaco (no JWT, no secuencial): identidad + llave del
+enlace. Un token identifica a un **grupo** (el "invitado principal"), no a una
+sola persona. El principal se describe con un nombre o etiqueta libre
+(p. ej. *"Familia Curiel-Ramírez"* o *"Norma Curiel"*) y cuelga de él una lista
+de invitados asociados.
+
+Entidades:
+
+```
+Guest (grupo / enlace)              GuestMember (persona del grupo)
+  id            uuid                   id           uuid
+  family        text  # etiqueta       guestId      uuid  -> Guest.id
+  token         uuid  # UUID opaco      name         text  # puede venir vacío (a llenar en el form)
+  role          enum  # novios |        editableName bool  # el invitado escribe el nombre
+                      # proveedor |      type         enum  # adulto | menor  (ver nota de política)
+                      # invitado         allowPlusOne bool  # este miembro puede sumar +1
+  confirmed     bool                    attending    bool|null
+  adults        int                     diet         text|null # restricción alimentaria
+  children      int   # ver nota         plusOneName  text|null
+  table         int|null              # (para el +1: attending/diet propios)
+  openedAt      timestamp
+```
+
+Esto permite: ver **quién abrió** la invitación (`openedAt`), **quién confirmó**
+(`confirmed`), **mostrar distintos nombres/etiquetas** por grupo, **limitar
+asistentes** (aforo) y **revocar** un enlace (invalidar el token) si hace falta.
+
+- El **formulario** (ya implementado en `Rsvp`, sin persistencia aún) recorre los
+  miembros del grupo con toggle **Sí/No** por persona, **dropdown de restricciones
+  alimentarias** que solo aparece si la persona marca el checkbox, y **+1 opcional**
+  (primero se activa el acompañante, luego su nombre y restricciones). Al confirmar
+  lanza un `window.confirm` con el resumen **quién va / quién no** antes de la
+  animación.
+- El backend inyectará el grupo resuelto en `window.__PARTY__` (misma forma que el
+  fallback documentado en `WeddingApp.jsx`).
 - Los novios necesitan **lectura del conteo** (panel simple o export) y la
   **generación/export de enlaces** por invitado.
+
+> ⚠️ **Decisión pendiente — política de menores.** `mission.md` fija el evento como
+> *solo adultos / sin infancias*, pero la nota del cliente en el roadmap incluye un
+> ejemplo con un miembro `menor` ("Sofía Curiel, 12"). El esquema deja los campos
+> `type`/`children` para no bloquear, pero **hay que reconciliar** copy público
+> (solo adultos) vs. datos (admite `menor`) antes de construir el backend.
+
+### Roles y vistas (a definir)
+
+El cliente pide considerar **tres tipos de usuario** por token/vista:
+**novios** (administración: alta de invitados, tokens, conteo), **proveedores**
+(vista/acceso acotado, por definir) e **invitados** (RSVP). El campo `role` en
+`Guest` los distingue; el alcance de cada vista queda **pendiente de definir**.
 
 ## Servicios externos previstos
 
