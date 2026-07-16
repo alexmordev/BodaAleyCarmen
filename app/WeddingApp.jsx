@@ -44,6 +44,8 @@ function Opener() {
 
   const open = () => {
     if (go) return
+    // El click es el gesto de usuario que habilita el autoplay del audio.
+    if (typeof window !== 'undefined') window.dispatchEvent(new Event('wedding:start-audio'))
     setGo(true)
     setTimeout(() => {
       setOpened(true)
@@ -92,24 +94,6 @@ function Opener() {
   )
 }
 
-function PlayIcon() {
-  return (
-    <svg width="9" height="10" viewBox="0 0 9 10" fill="currentColor"><path d="M0 0l9 5-9 5z" /></svg>
-  )
-}
-
-function Song({ href, title, subtitle, style }) {
-  return (
-    <a className="song reveal" href={href} target="_blank" rel="noopener" style={style}>
-      <span className="play"><PlayIcon /></span>
-      <span className="meta"><b>{title}</b><small>{subtitle}</small></span>
-      <span className="eq">
-        <i style={{ height: 5 }}></i><i style={{ height: 10 }}></i><i style={{ height: 7 }}></i><i style={{ height: 9 }}></i>
-      </span>
-    </a>
-  )
-}
-
 // --- Nav ---
 function Nav() {
   const [scrolled, setScrolled] = useState(false)
@@ -130,23 +114,29 @@ function Nav() {
 }
 
 // --- Countdown ---
+// `now` arranca en null para que el render del servidor y la primera pintura del
+// cliente coincidan (placeholder "—"); así evitamos un desajuste de hidratación
+// (React #418) por la diferencia horaria entre build y carga. El tiempo real se
+// fija ya montados, en el efecto.
 function Countdown() {
-  const [now, setNow] = useState(Date.now())
+  const [now, setNow] = useState(null)
   useEffect(() => {
+    setNow(Date.now())
     const i = setInterval(() => setNow(Date.now()), 1000)
     return () => clearInterval(i)
   }, [])
-  let d = Math.max(0, WEDDING_TARGET - now)
+  let d = Math.max(0, WEDDING_TARGET - (now ?? 0))
   const days = Math.floor(d / 86400000); d -= days * 86400000
   const h = Math.floor(d / 3600000); d -= h * 3600000
   const m = Math.floor(d / 60000); d -= m * 60000
   const s = Math.floor(d / 1000)
+  const ready = now !== null
   return (
     <div className="count reveal">
-      <div className="u"><b>{days}</b><small>Días</small></div>
-      <div className="u"><b>{String(h).padStart(2, '0')}</b><small>Horas</small></div>
-      <div className="u"><b>{String(m).padStart(2, '0')}</b><small>Min</small></div>
-      <div className="u"><b>{String(s).padStart(2, '0')}</b><small>Seg</small></div>
+      <div className="u"><b>{ready ? days : '—'}</b><small>Días</small></div>
+      <div className="u"><b>{ready ? String(h).padStart(2, '0') : '—'}</b><small>Horas</small></div>
+      <div className="u"><b>{ready ? String(m).padStart(2, '0') : '—'}</b><small>Min</small></div>
+      <div className="u"><b>{ready ? String(s).padStart(2, '0') : '—'}</b><small>Seg</small></div>
     </div>
   )
 }
@@ -174,7 +164,6 @@ function Night() {
       <div className="k reveal">Cómo empezó todo</div>
       <div className="pull reveal">Tres días<br />y un para siempre.</div>
       <p className="lead reveal">Fue en Santa María la Ribera, todo decorado de Día de Muertos y hasta con gatitos rondando. Él llegó tarde, ella tenía trencitas, y no paramos de reír en toda la cena. El vecino todavía se queja de que nos reímos demasiado en las noches.</p>
-      <Song href="https://open.spotify.com/search/A%20Thousand%20Years%20Christina%20Perri" title="A Thousand Years" subtitle="La que suena en nosotros" />
       <div className="imgfull reveal"><img src={imgCena} alt="Alejandro y Carmen" /></div>
 
       <div className="divider reveal"><span>La pregunta · Valle de Bravo</span></div>
@@ -189,7 +178,6 @@ function Night() {
         <blockquote>&ldquo;Con esta mano sostendré tus anhelos&hellip;&rdquo;</blockquote>
         <div className="who">— La pregunta, palabra por palabra</div>
       </div>
-      <Song href="https://open.spotify.com/search/The%20Story%20Brandi%20Carlile" title="The Story · Brandi Carlile" subtitle="La que también nos cuenta" />
     </section>
   )
 }
@@ -205,7 +193,6 @@ function Boda() {
         <div className="tag">Aviso de la pista</div>
         <p className="big">Aquí solo se baila una cosa: reguetón.</p>
         <p className="small">Ven con los tenis puestos. La fiesta no para hasta que salga el sol.</p>
-        <Song href="https://open.spotify.com/search/Compartir%20Carla%20Morrison" title="Compartir · Carla Morrison" subtitle="Antes de que se prenda todo" style={{ marginTop: 16 }} />
       </div>
     </section>
   )
@@ -231,11 +218,23 @@ function Plan() {
           </div>
         ))}
       </div>
-      <div className="dresscode reveal">
-        <div className="tag">Código de vestimenta</div>
-        <p className="big">Formal</p>
-        <p className="small">Ellas, vestido largo o cóctel; ellos, traje. Un consejo de corazón: trae unos tenis en la bolsa para cuando se abra la pista.</p>
+      <p className="lead reveal" style={{ marginTop: 22 }}>Un consejo de corazón: trae unos tenis en la bolsa para cuando se abra la pista.</p>
+    </section>
+  )
+}
+
+// --- Código de vestimenta ---
+function Dress() {
+  return (
+    <section className="dress" data-screen-label="Código de vestimenta">
+      <div className="k reveal">Código de vestimenta</div>
+      <h2 className="reveal">Vengan muy<br /><em>formales.</em></h2>
+      <p className="lead reveal">Es una celebración de etiqueta formal. Nos encantará verlos elegantes de la ceremonia a la pista.</p>
+      <div className="reserved">
+        <div className="rc reveal"><span className="sw white"></span><div><b>Blanco</b><small>Reservado para la novia</small></div></div>
+        <div className="rc reveal"><span className="sw blue"></span><div><b>Azul</b><small>Reservado para el novio</small></div></div>
       </div>
+      <p className="free reveal">Fuera de esos dos colores, libertad total: elige lo que te haga sentir increíble.</p>
     </section>
   )
 }
@@ -308,7 +307,10 @@ function Values() {
     <section className="values" data-screen-label="Valores">
       <div className="glow"></div>
       <div className="eyebrow reveal">Lo que nos mueve</div>
-      <p className="manifesto reveal">Creemos en el amor, en la risa fuerte y en un <b>mundo más justo.</b></p>
+      <div className="creed reveal">
+        <div className="pal" aria-hidden="true"><div className="stripes"></div><div className="tri"></div></div>
+        <p className="manifesto">Creemos en el amor, en la risa fuerte y en un <b>mundo más justo.</b></p>
+      </div>
       <div className="after reveal">Eso también se celebra</div>
     </section>
   )
@@ -734,83 +736,319 @@ function Footer() {
 
 // --- Gato estilo "El Cadáver de la Novia" ---
 function CatWalker() {
-  const ref = useRef(null)
-  const wrapRef = useRef(null)
+  const layerRef = useRef(null)
 
-  // Camina (mueve las patas) solo mientras hay scroll; se detiene al quedar quieto.
-  // La posición horizontal (6% → 78%) va enganchada al progreso de scroll con
-  // scrub; el respeto a prefers-reduced-motion se delega en gsap.matchMedia.
+  // Gato negro con bufanda lila (diseño "Transiciones"). Camina por la base
+  // moviéndose con el usuario y, al entrar a cada sección, hace un movimiento
+  // felino (sentado, mirar, lamerse). En la última sección se duerme (zzz).
   useGSAP(() => {
-    let idle = null
-    const mm = gsap.matchMedia()
-    mm.add('(prefers-reduced-motion: no-preference)', () => {
-      gsap.to(ref.current, {
-        left: '78%',
-        ease: 'none',
-        scrollTrigger: {
-          start: 0,
-          end: 'max',
-          scrub: 0.3,
-          onUpdate: () => {
-            const el = wrapRef.current
-            if (!el) return
-            el.classList.add('walking')
-            clearTimeout(idle)
-            idle = setTimeout(() => wrapRef.current && wrapRef.current.classList.remove('walking'), 180)
-          },
-        },
-      })
-    })
-    return () => clearTimeout(idle)
-  }, { scope: wrapRef })
+    const layer = layerRef.current
+    if (!layer) return
+    const catbox = layer.querySelector('#catbox')
+    const catflip = layer.querySelector('#catflip')
+    const catpose = layer.querySelector('#catpose')
+    if (!catbox) return
 
-  // Reacciones ante las selecciones del RSVP (happy / sad / party).
-  useEffect(() => {
-    let t = null
-    const onReact = (e) => {
-      const mood = (e.detail && e.detail.mood) || 'happy'
-      const el = wrapRef.current
-      if (!el) return
-      el.classList.remove('react-happy', 'react-sad', 'react-party')
-      // reflow para reiniciar la animación aunque sea el mismo mood
-      void el.offsetWidth
-      el.classList.add('react-' + mood)
-      clearTimeout(t)
-      t = setTimeout(() => el && el.classList.remove('react-happy', 'react-sad', 'react-party'), mood === 'party' ? 1600 : 900)
+    // Las secciones viven FUERA de .catlayer (el scope de este useGSAP), así que
+    // hay que consultarlas contra el documento, no con el selector scopeado.
+    const panels = Array.from(document.querySelectorAll('.device section'))
+    const N = panels.length
+    if (!N) return
+
+    // Posición inicial aleatoria del gato sobre la base.
+    const randX = () => Math.round(16 + Math.random() * Math.max(40, layer.clientWidth - 112))
+    let curX = randX()
+    gsap.set(catbox, { x: curX })
+
+    // Con "reduce motion" el gato solo se coloca quieto: sin caminata ni poses.
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+
+    const triggers = []
+    const state = { active: -1, idleTl: null }
+
+    const POSE_TARGETS = [catpose, '.cat .body', '.cat .scarf', '.cat .legF', '.cat .head', '.cat .earL', '.cat .earR', '.cat .pupil', '.cat .pupilL', '.cat .pupilR', '#zzz span']
+
+    const resetCat = () => {
+      if (state.idleTl) { state.idleTl.kill(); state.idleTl = null }
+      gsap.killTweensOf(POSE_TARGETS)
+      gsap.set([catpose, '.cat .body', '.cat .scarf', '.cat .legF', '.cat .head', '.cat .earL', '.cat .earR', '.cat .pupil'], { clearProps: 'all' })
+      gsap.set('.cat .pupilL', { attr: { x: 54.6 }, clearProps: 'transform' })
+      gsap.set('.cat .pupilR', { attr: { x: 76.6 }, clearProps: 'transform' })
+      gsap.set('#zzz span', { clearProps: 'all', opacity: 0 })
     }
-    window.addEventListener('cat:react', onReact)
-    return () => { window.removeEventListener('cat:react', onReact); clearTimeout(t) }
-  }, [])
+
+    const moves = {
+      // sentado, atento: micro-inclinaciones de cabeza y giros de oreja (radar)
+      sentado() {
+        const tl = gsap.timeline({ repeat: -1, repeatDelay: 1.6 })
+        tl.to('.cat .head', { rotation: 3, duration: 1.3, ease: 'sine.inOut' })
+          .to('.cat .earL', { rotation: -10, duration: 0.13, yoyo: true, repeat: 1, ease: 'power1.inOut' }, '<0.6')
+          .to('.cat .head', { rotation: -2.5, duration: 1.5, ease: 'sine.inOut' }, '+=1.2')
+          .to('.cat .earR', { rotation: 10, duration: 0.13, yoyo: true, repeat: 1, ease: 'power1.inOut' }, '<0.7')
+          .to('.cat .head', { rotation: 0, duration: 1.1, ease: 'sine.inOut' }, '+=1')
+        return tl
+      },
+      // seguir algo con la mirada: sobre todo pupilas, la cabeza apenas acompaña
+      mirar() {
+        const tl = gsap.timeline({ repeat: -1, repeatDelay: 1.4 })
+        tl.to(['.cat .pupilL', '.cat .pupilR'], { attr: { x: '-=2.6' }, duration: 0.35, ease: 'power2.out' })
+          .to('.cat .head', { rotation: -3, duration: 0.7, ease: 'sine.inOut' }, '<')
+          .to('.cat .earL', { rotation: -10, duration: 0.14, yoyo: true, repeat: 1 }, '<0.35')
+          .to(['.cat .pupilL', '.cat .pupilR'], { attr: { x: '+=5.2' }, duration: 0.45, ease: 'power2.inOut' }, '+=1.1')
+          .to('.cat .head', { rotation: 2.5, duration: 0.8, ease: 'sine.inOut' }, '<')
+          .to('.cat .earR', { rotation: 11, duration: 0.14, yoyo: true, repeat: 1 }, '<0.4')
+          .to(['.cat .pupilL', '.cat .pupilR'], { attr: { x: '-=2.6' }, duration: 0.4, ease: 'sine.inOut' }, '+=1')
+          .to('.cat .head', { rotation: 0, duration: 0.7, ease: 'sine.inOut' }, '<')
+        return tl
+      },
+      // lamerse la pata: la levanta, baja la cabeza, lametones cortos y dos pasadas
+      lamerse() {
+        const tl = gsap.timeline({ repeat: -1, repeatDelay: 2.8 })
+        tl.to('.cat .legF', { rotation: -52, duration: 0.7, ease: 'power2.inOut' })
+          .to('.cat .head', { rotation: 10, y: 3, duration: 0.55, ease: 'power1.inOut' }, '<0.15')
+        for (let i = 0; i < 5; i++) {
+          tl.to('.cat .head', { rotation: 13.5, y: 4.5, duration: 0.16, ease: 'sine.in' })
+            .to('.cat .legF', { rotation: -47.5, duration: 0.16, ease: 'sine.in' }, '<')
+            .to('.cat .head', { rotation: 10.5, y: 3, duration: 0.21, ease: 'sine.out' })
+            .to('.cat .legF', { rotation: -52, duration: 0.21, ease: 'sine.out' }, '<')
+        }
+        tl.to('.cat .legF', { rotation: -66, duration: 0.5, ease: 'power1.inOut' }, '+=0.3')
+          .to('.cat .head', { rotation: 14, y: 5, duration: 0.5, ease: 'power1.inOut' }, '<')
+          .to('.cat .legF', { rotation: -50, duration: 0.55, ease: 'power1.inOut' })
+          .to('.cat .head', { rotation: 9, y: 2.5, duration: 0.55, ease: 'power1.inOut' }, '<')
+          .to('.cat .legF', { rotation: -66, duration: 0.5, ease: 'power1.inOut' })
+          .to('.cat .head', { rotation: 14, y: 5, duration: 0.5, ease: 'power1.inOut' }, '<')
+          .to(['.cat .legF', '.cat .head'], { rotation: 0, y: 0, duration: 0.85, ease: 'power2.inOut' }, '+=0.25')
+        return tl
+      },
+      // acostarse a dormir: se acomoda, se recuesta, cierra los ojos, respira, zzz
+      dormir() {
+        const tl = gsap.timeline()
+        tl.to(catpose, { x: 2, duration: 0.35, ease: 'sine.inOut' })
+          .to(catpose, { x: -1.5, duration: 0.4, ease: 'sine.inOut' })
+          .to(catpose, { x: 0, duration: 0.35, ease: 'sine.inOut' })
+        tl.set('.cat .pupil', { animation: 'none' }, 0.3)
+        tl.to('.cat .body', { scaleY: 0.8, transformOrigin: '50% 100%', duration: 1.6, ease: 'power2.inOut' }, 0.5)
+          .to('.cat .legF', { scaleY: 0.45, transformOrigin: '50% 100%', duration: 1.6, ease: 'power2.inOut' }, 0.5)
+          .to('.cat .scarf', { y: 6, scaleY: 0.92, transformOrigin: '50% 100%', duration: 1.6, ease: 'power2.inOut' }, 0.5)
+          .to('.cat .head', { y: 10, rotation: 5, duration: 1.8, ease: 'power2.inOut' }, 0.6)
+          .to('.cat .earL', { rotation: -7, duration: 1.3, ease: 'sine.inOut' }, 0.9)
+          .to('.cat .earR', { rotation: 7, duration: 1.3, ease: 'sine.inOut' }, 0.9)
+          .to('.cat .pupil', { scaleY: 0.07, duration: 1.5, ease: 'power2.inOut' }, 0.8)
+        const breathe = gsap.timeline({ repeat: -1 })
+        breathe.to('.cat .body', { scaleY: 0.835, duration: 1.9, ease: 'sine.inOut' })
+          .to('.cat .body', { scaleY: 0.8, duration: 1.9, ease: 'sine.inOut' })
+        const nod = gsap.timeline({ repeat: -1 })
+        nod.to('.cat .head', { y: 11, duration: 1.9, ease: 'sine.inOut' })
+          .to('.cat .head', { y: 10, duration: 1.9, ease: 'sine.inOut' })
+        tl.add(breathe, 2.4).add(nod, 2.4)
+        const zs = gsap.utils.toArray('#zzz span')
+        const loop = gsap.timeline({ repeat: -1 })
+        zs.forEach((z, i) => {
+          loop.to(z, { opacity: 1, y: -14, duration: 1.4, ease: 'sine.out' }, i * 0.65)
+            .to(z, { opacity: 0, y: -26, duration: 1, ease: 'sine.in' }, 1.2 + i * 0.65)
+        })
+        tl.add(loop, 2.6)
+        return tl
+      },
+    }
+
+    const shuffle = (a) => {
+      for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1));[a[i], a[j]] = [a[j], a[i]] }
+      return a
+    }
+    // un movimiento por sección; el gato se duerme en la última
+    const pool = shuffle(['sentado', 'mirar', 'lamerse'])
+    const assigned = []
+    for (let i = 0; i < N - 1; i++) assigned.push(pool[i % pool.length])
+    assigned.push('dormir')
+
+    const walkTo = (x) => {
+      const dir = x >= curX ? 1 : -1
+      gsap.to(catflip, { scaleX: dir, duration: 0.18 })
+      const dist = Math.abs(x - curX)
+      const dur = Math.max(0.55, Math.min(1.7, dist / 210))
+      const steps = Math.max(3, Math.round(dur * 5))
+      const bob = gsap.timeline()
+      for (let s = 0; s < steps; s++) {
+        bob.to(catpose, { y: -2.6, duration: (dur / steps) * 0.5, ease: 'sine.out' })
+          .to(catpose, { y: 0, duration: (dur / steps) * 0.5, ease: 'sine.in' })
+      }
+      curX = x
+      return gsap.to(catbox, { x, duration: dur, ease: 'sine.inOut' })
+    }
+
+    const activate = (i) => {
+      if (i === state.active || i < 0 || i >= N) return
+      state.active = i
+      resetCat()
+      const walk = walkTo(randX())
+      walk.eventCallback('onComplete', () => {
+        if (state.active === i) state.idleTl = moves[assigned[i]]()
+      })
+    }
+
+    panels.forEach((p, i) => {
+      triggers.push(ScrollTrigger.create({
+        trigger: p, start: 'top 55%', end: 'bottom 45%',
+        onEnter: () => activate(i), onEnterBack: () => activate(i),
+      }))
+    })
+
+    ScrollTrigger.refresh()
+    activate(0)
+
+    return () => {
+      triggers.forEach((t) => t.kill())
+      if (state.idleTl) state.idleTl.kill()
+      gsap.killTweensOf(POSE_TARGETS)
+      gsap.killTweensOf([catbox, catflip])
+    }
+  }, { scope: layerRef })
 
   return (
-    <div className="catwrap" ref={wrapRef} aria-hidden="true">
-      <div className="cat-path"></div>
-      <svg ref={ref} className="cat" viewBox="0 0 100 96" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <g className="tail">
-          <path d="M14 66 C 2 62, 0 44, 8 34 C 12 29, 20 30, 20 37 C 20 43, 12 43, 12 50 C 12 58, 22 60, 26 62 Z" fill="#6E5497" stroke="#3A2F48" strokeWidth="1.5" />
-        </g>
-        <g className="body-bob">
-          {/* patas lejanas (lado opuesto) — más oscuras y detrás del cuerpo, en fase diagonal */}
-          <g className="legBfar"><rect x="36" y="60" width="5.5" height="22" rx="2.75" fill="#5A4680" stroke="#3A2F48" strokeWidth="1.2" /></g>
-          <g className="legFfar"><rect x="52" y="60" width="5.5" height="24" rx="2.75" fill="#5A4680" stroke="#3A2F48" strokeWidth="1.2" /></g>
-          {/* patas cercanas */}
-          <g className="legB"><rect x="30" y="60" width="6" height="24" rx="3" fill="#6E5497" stroke="#3A2F48" strokeWidth="1.5" /></g>
-          <g className="legF"><rect x="58" y="60" width="6" height="26" rx="3" fill="#7B60A6" stroke="#3A2F48" strokeWidth="1.5" /></g>
-          <path d="M20 62 C 18 44, 30 34, 50 34 C 72 34, 80 46, 78 64 C 77 74, 66 76, 50 76 C 34 76, 22 74, 20 62 Z" fill="#7B60A6" stroke="#3A2F48" strokeWidth="1.6" />
-          <path d="M40 40 v10 M44 39 v12 M48 39 v12 M52 40 v10" stroke="#3A2F48" strokeWidth="1" opacity="0.5" />
-          <path d="M56 30 C 56 16, 88 16, 88 32 C 88 46, 74 50, 66 48 C 59 46, 56 40, 56 30 Z" fill="#7B60A6" stroke="#3A2F48" strokeWidth="1.6" />
-          <path d="M58 20 L 54 6 L 66 16 Z" fill="#6E5497" stroke="#3A2F48" strokeWidth="1.4" />
-          <path d="M80 18 L 86 4 L 88 20 Z" fill="#6E5497" stroke="#3A2F48" strokeWidth="1.4" />
-          <ellipse cx="66" cy="30" rx="6.5" ry="8" fill="#F3EEFA" stroke="#3A2F48" strokeWidth="1.2" />
-          <ellipse cx="80" cy="30" rx="6.5" ry="8" fill="#F3EEFA" stroke="#3A2F48" strokeWidth="1.2" />
-          <g className="pupil" style={{ transformOrigin: '73px 31px' }}>
-            <circle cx="67" cy="31" r="2.6" fill="#2C2530" />
-            <circle cx="81" cy="31" r="2.6" fill="#2C2530" />
-          </g>
-          <path d="M72 39 l3 0 l-1.5 2 z" fill="#C24B7A" />
-        </g>
-      </svg>
+    <div className="catlayer" aria-hidden="true" ref={layerRef}>
+      <div className="catbox" id="catbox">
+        <div className="catflip" id="catflip">
+          <div className="catpose" id="catpose">
+            <svg className="cat" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <g className="tail">
+                <path d="M34 90 C 16 88, 8 72, 12 54 C 15 41, 27 36, 30 44 C 32 50, 25 52, 23 59 C 20 70, 28 80, 42 83 Z" fill="#4A443A" stroke="#262220" strokeWidth="3" strokeLinejoin="round" />
+              </g>
+              <path className="body" d="M32 94 C 27 78, 31 60, 45 51 C 55 45, 68 49, 73 61 C 77 71, 78 84, 78 94 Z" fill="#4A443A" stroke="#262220" strokeWidth="3" strokeLinejoin="round" />
+              <path d="M36 92 C 36 79, 41 71, 49 68" stroke="#262220" strokeWidth="2.4" strokeLinecap="round" />
+              <g className="legF">
+                <path d="M61 94 L61 72 C 61 68, 70 68, 70 72 L70 94 Z" fill="#4A443A" stroke="#262220" strokeWidth="2.6" strokeLinejoin="round" />
+              </g>
+              <g className="scarf">
+                <path d="M47 47 C 49 55, 78 55, 82 44 C 83 52, 78 59, 65 59 C 53 59, 47 54, 47 47 Z" fill="#C9A6DC" stroke="#262220" strokeWidth="2.6" strokeLinejoin="round" />
+                <path d="M55 56 L52 72 C 51.5 76, 61 76, 61 72 L61 58 Z" fill="#C9A6DC" stroke="#262220" strokeWidth="2.6" strokeLinejoin="round" />
+                <path d="M54 60 c 2 1.5, 4 1.5, 6 0 M53.4 64 c 2 1.5, 4.4 1.5, 6.6 0 M52.8 68 c 2 1.5, 4.8 1.5, 7.2 0" stroke="#8E6AA8" strokeWidth="1.4" strokeLinecap="round" opacity="0.75" />
+                <path d="M56 49 c 2 2, 4 2, 6 0 M64 51 c 2 2, 4 2, 6 0 M72 50 c 2 1.6, 4 1.6, 6 -0.5" stroke="#8E6AA8" strokeWidth="1.4" strokeLinecap="round" opacity="0.75" />
+              </g>
+              <g className="head">
+                <path d="M44 28 C 44 12, 54 7, 65 7 C 76 7, 87 12, 87 28 C 87 38, 79 45, 65 45 C 51 45, 44 38, 44 28 Z" fill="#4A443A" stroke="#262220" strokeWidth="3" strokeLinejoin="round" />
+                <g className="earL"><path d="M47 18 L44 2 L60 9 Z" fill="#4A443A" stroke="#262220" strokeWidth="3" strokeLinejoin="round" /><path d="M49 14 L47.5 7 L54.5 10 Z" fill="#E8E4D8" /></g>
+                <g className="earR"><path d="M84 18 L87 2 L71 9 Z" fill="#4A443A" stroke="#262220" strokeWidth="3" strokeLinejoin="round" /><path d="M82 14 L83.5 7 L76.5 10 Z" fill="#E8E4D8" /></g>
+                <ellipse cx="56" cy="26" rx="6.6" ry="7.4" fill="#A8E6AC" stroke="#262220" strokeWidth="2.4" />
+                <ellipse cx="78" cy="26" rx="6.6" ry="7.4" fill="#A8E6AC" stroke="#262220" strokeWidth="2.4" />
+                <g className="pupil">
+                  <rect className="pupilL" x="54.6" y="21.5" width="3" height="9" rx="1.5" fill="#262220" />
+                  <rect className="pupilR" x="76.6" y="21.5" width="3" height="9" rx="1.5" fill="#262220" />
+                </g>
+                <path d="M64 35 l6 0 l-3 4 z" fill="#262220" />
+                <path d="M44 31 h-9 M45 35 h-8 M87 31 h9 M86 35 h8" stroke="#262220" strokeWidth="2" strokeLinecap="round" />
+              </g>
+            </svg>
+          </div>
+        </div>
+        <div className="zzz" id="zzz"><span>z</span><span style={{ left: 10, bottom: 10 }}>z</span><span style={{ left: 20, bottom: 20 }}>z</span></div>
+      </div>
     </div>
+  )
+}
+
+// --- Audio de fondo con fundido cruzado ---
+// "Compartir" suena desde que se abre el sobre (gesto del usuario que habilita
+// el autoplay) y hace crossfade a "Tropicoqueta" al llegar a la sección Boda
+// ("Ahora sí: nos casamos"). Los MP3 van en /public/audio/.
+const AUDIO_VOL = 0.55
+
+function AudioController() {
+  const [muted, setMuted] = useState(false)
+  const [visible, setVisible] = useState(false) // se muestra tras abrir el sobre
+  const aRef = useRef(null)   // Compartir
+  const bRef = useRef(null)   // Tropicoqueta
+  const startedRef = useRef(false)
+  const phaseRef = useRef('a')
+  const mutedRef = useRef(false)
+
+  useEffect(() => { mutedRef.current = muted }, [muted])
+
+  // Crea los dos elementos de audio (loop, volumen inicial 0).
+  useEffect(() => {
+    const a = new Audio('/audio/compartir.mp3')
+    const b = new Audio('/audio/tropicoqueta.mp3')
+    a.loop = true; b.loop = true
+    a.volume = 0; b.volume = 0
+    a.preload = 'auto'; b.preload = 'auto'
+    aRef.current = a; bRef.current = b
+    return () => { a.pause(); b.pause(); aRef.current = null; bRef.current = null }
+  }, [])
+
+  // Arranca al abrir el sobre (evento disparado dentro del gesto de click).
+  useEffect(() => {
+    const start = () => {
+      if (startedRef.current) return
+      startedRef.current = true
+      setVisible(true)
+      const a = aRef.current
+      if (!a) return
+      a.play().then(() => {
+        gsap.to(a, { volume: mutedRef.current ? 0 : AUDIO_VOL, duration: 1.4, ease: 'sine.out' })
+      }).catch(() => {})
+    }
+    window.addEventListener('wedding:start-audio', start)
+    return () => window.removeEventListener('wedding:start-audio', start)
+  }, [])
+
+  const crossfade = (to) => {
+    phaseRef.current = to
+    const a = aRef.current, b = bRef.current
+    if (!a || !b || !startedRef.current) return
+    const vol = mutedRef.current ? 0 : AUDIO_VOL
+    const [inEl, outEl] = to === 'b' ? [b, a] : [a, b]
+    inEl.play().catch(() => {})
+    gsap.to(inEl, { volume: vol, duration: 1.6, ease: 'sine.inOut' })
+    gsap.to(outEl, { volume: 0, duration: 1.6, ease: 'sine.inOut', onComplete: () => outEl.pause() })
+  }
+
+  // Fundido cruzado enganchado a la sección Boda.
+  useGSAP(() => {
+    const boda = document.querySelector('.boda')
+    if (!boda) return
+    const st = ScrollTrigger.create({
+      trigger: boda, start: 'top 60%', end: 'max',
+      onEnter: () => crossfade('b'),
+      onLeaveBack: () => crossfade('a'),
+    })
+    return () => st.kill()
+  }, [])
+
+  const toggleMute = () => {
+    setMuted((m) => {
+      const next = !m
+      mutedRef.current = next
+      const active = phaseRef.current === 'b' ? bRef.current : aRef.current
+      if (next) {
+        if (aRef.current) gsap.to(aRef.current, { volume: 0, duration: 0.4 })
+        if (bRef.current) gsap.to(bRef.current, { volume: 0, duration: 0.4 })
+      } else if (active) {
+        active.play().catch(() => {})
+        gsap.to(active, { volume: AUDIO_VOL, duration: 0.4 })
+      }
+      return next
+    })
+  }
+
+  return (
+    <button
+      type="button"
+      className={`audio-btn ${visible ? 'show' : ''} ${muted ? 'muted' : ''}`}
+      onClick={toggleMute}
+      aria-label={muted ? 'Activar música' : 'Silenciar música'}
+      aria-pressed={muted}
+    >
+      {muted ? (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M11 5 6 9H2v6h4l5 4z" /><path d="M22 9l-6 6M16 9l6 6" />
+        </svg>
+      ) : (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M11 5 6 9H2v6h4l5 4z" /><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 6a8 8 0 0 1 0 12" />
+        </svg>
+      )}
+    </button>
   )
 }
 
@@ -863,12 +1101,14 @@ export default function WeddingApp() {
   return (
     <>
       <Opener />
+      <AudioController />
       <div className="device">
         <Nav />
         <Hero />
         <Night />
         <Boda />
         <Plan />
+        <Dress />
         <Venue />
         <Stay />
         <Gifts />
