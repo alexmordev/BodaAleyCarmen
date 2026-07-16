@@ -145,9 +145,8 @@ Cada fase debería caber en un PR pequeño hacia `develop`.
    persistir) y el **bloqueo por token** + pantalla de acceso.
 3. **Pase de responsive de escritorio** completo (centrado/tipografía) con revisión
    del cliente, sin romper la identidad del diseño.
-4. Redacción **definitiva de la historia** (pareja) y del copy final de `Values`.
-5. Fijar **casas de Airbnb** y **enlaces de regalos** reales.
-6. QA del `scroll-snap` y de las reacciones del gato en dispositivos reales.
+4. Redacción **definitiva de la historia** (pareja) y del copy final de `Values`
+5. QA del `scroll-snap` y de las reacciones del gato en dispositivos reales.
 
 ## Decisiones pendientes
 
@@ -158,11 +157,7 @@ Cada fase debería caber en un PR pequeño hacia `develop`.
    con Route Handlers **vs.** BaaS (Supabase/Firebase).
 3. **Roles y vistas**: alcance concreto de las vistas **novios / proveedores /
    invitados** y qué ve/puede cada token.
-4. **`?i=<token>` vs. ruta `/i/<token>`**: se mantiene query param salvo necesidad.
-5. **Mantener o no el `scroll-snap`** por sección tras el QA.
-
-
-
+4. **`?i=<token>` vs. ruta `/i/<token>`**: se mantiene query param salvo necesidad.ari
 
 
 

@@ -108,7 +108,15 @@ function Nav() {
   return (
     <nav className={`nav ${scrolled ? 'scrolled' : ''}`}>
       <div className="logo">A<span className="amp">&amp;</span>C</div>
+      {/* Anclas de escritorio (diseño "Alejandro & Carmen · Web"); ocultas en móvil */}
+      <ul className="links">
+        <li><a href="#historia">Nuestra historia</a></li>
+        <li><a href="#boda">La boda</a></li>
+        <li><a href="#lugar">El lugar</a></li>
+        <li><a href="#hospedaje">Hospedaje</a></li>
+      </ul>
       <div className="nav-date">07 · XI · 2026</div>
+      <a className="cta" href="#rsvp">Confirmar</a>
     </nav>
   )
 }
@@ -144,7 +152,7 @@ function Countdown() {
 // --- Hero (Portada) ---
 function Hero() {
   return (
-    <section className="hero" data-screen-label="Portada">
+    <section className="hero" id="inicio" data-screen-label="Portada">
       <div className="eyebrow reveal">Sábado · 7 de noviembre 2026 · 17:30</div>
       <h1 className="reveal">Alejandro<br /><em>&amp;</em> Carmen</h1>
       <p className="sub reveal">Nos casamos y queremos que estés ahí..</p>
@@ -159,12 +167,17 @@ function Hero() {
 // --- Primera cita + pedida ---
 function Night() {
   return (
-    <section className="night" data-screen-label="Primera cita y pedida">
+    <section className="night" id="historia" data-screen-label="Primera cita y pedida">
       <div className="glow"></div>
-      <div className="k reveal">Cómo empezó todo</div>
-      <div className="pull reveal">Tres días<br />y un para siempre.</div>
-      <p className="lead reveal">Fue en Santa María la Ribera, todo decorado de Día de Muertos y hasta con gatitos rondando. Él llegó tarde, ella tenía trencitas, y no paramos de reír en toda la cena. El vecino todavía se queja de que nos reímos demasiado en las noches.</p>
-      <div className="imgfull reveal"><img src={imgCena} alt="Alejandro y Carmen" /></div>
+      {/* .split: apilado en móvil (sin cambios visuales); texto | foto en escritorio */}
+      <div className="split">
+        <div className="split-txt">
+          <div className="k reveal">Cómo empezó todo</div>
+          <div className="pull reveal">Tres días<br />y un para siempre.</div>
+          <p className="lead reveal">Fue en Santa María la Ribera, todo decorado de Día de Muertos y hasta con gatitos rondando. Él llegó tarde, ella tenía trencitas, y no paramos de reír en toda la cena. El vecino todavía se queja de que nos reímos demasiado en las noches.</p>
+        </div>
+        <div className="imgfull reveal"><img src={imgCena} alt="Alejandro y Carmen" /></div>
+      </div>
 
       <div className="divider reveal"><span>La pregunta · Valle de Bravo</span></div>
 
@@ -185,7 +198,7 @@ function Night() {
 // --- Boda ---
 function Boda() {
   return (
-    <section className="boda" data-screen-label="Boda">
+    <section className="boda" id="boda" data-screen-label="Boda">
       <div className="k reveal">La boda</div>
       <h2 className="reveal">Ahora sí:<br /><em>nos casamos.</em></h2>
       <p className="lead reveal">El 7 de noviembre de 2026 lo hacemos oficial, rodeados de la gente que queremos. Cena, mezcal, brindis y la fiesta que siempre soñamos.</p>
@@ -242,7 +255,7 @@ function Dress() {
 // --- El lugar ---
 function Venue() {
   return (
-    <section className="venue" data-screen-label="El lugar">
+    <section className="venue" id="lugar" data-screen-label="El lugar">
       <div className="k reveal">El lugar</div>
       <img className="reveal" src={imgHacienda} alt="Hacienda La Esmeralda" />
       <h3 className="reveal">Hacienda La Esmeralda</h3>
@@ -262,7 +275,7 @@ function Stay() {
     ['3', 'Casa con jardín para grupos', 'Aprox. 20 min · Hasta 12 personas', 'Espacio grande con áreas comunes: la opción más rendidora si vienen muchos primos y tíos.', 'https://www.airbnb.mx/s/Coyoacan--CDMX/homes?adults=10&room_types%5B%5D=Entire%20home%2Fapt'],
   ]
   return (
-    <section className="stay" data-screen-label="Hospedaje">
+    <section className="stay" id="hospedaje" data-screen-label="Hospedaje">
       <div className="k reveal">Cerca, para que se queden</div>
       <h2 className="reveal">Dónde<br /><em>quedarse.</em></h2>
       <p className="lead reveal" style={{ marginBottom: 12 }}>Si vienes de fuera y con toda la familia, estas son <b>casas y departamentos completos en Airbnb</b> cerca de la hacienda — económicos y amplios para que se hospeden juntos y compartan gastos.</p>
@@ -546,7 +559,7 @@ function Rsvp() {
   }
 
   return (
-    <section className="rsvp" data-screen-label="Confirmar">
+    <section className="rsvp" id="rsvp" data-screen-label="Confirmar">
       <div className="eyebrow reveal" style={{ color: 'var(--lila)', marginBottom: 16 }}>Confirmación</div>
       <h2 className="reveal">¿Nos acompañas?</h2>
       <p className="invita reveal">
