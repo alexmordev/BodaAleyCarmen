@@ -37,6 +37,11 @@ Cada fase debería caber en un PR pequeño hacia `develop`.
       pareja (ver Decisiones pendientes).
 - [x] Fotos reales: `nosotros-cena.jpg`, `propuesta.jpg`, `anillo-flores.jpg`.
 - [~] Ajuste fino de estilo sin alterar la identidad del diseño.
+- [ ] **Agregar la canción** de la historia/pedida ("Puse la canción, ella
+      entró…"). Existen los estilos `.song` sin usar y el `AudioController` de
+      fondo; falta decidir e implementar: reproductor visible con la canción
+      concreta, o integrarla en el crossfade de audio. Requiere el MP3 y el
+      título/artista definitivos del cliente (colocar en `public/audio/`).
 
 ## Fase 3 — Logística: Plan + Venue + Stay
 
@@ -68,29 +73,40 @@ Cada fase debería caber en un PR pequeño hacia `develop`.
 - [ ] Todos los enlaces salientes verificados. El **sobre digital** requiere
       backend (ver Fase 5 y Stoppers).
 
-## Fase 5 — RSVP (requiere decisión de backend)
+## Fase 5 — RSVP (backend)
 
-> Backend natural: **API routes de Next.js** (`app/api/*`), al correr ya como app
-> Node en Hostinger. Falta elegir la **capa de datos** (ver `tech-stack.md`).
+> **Capa de datos decidida y montada:** MySQL gestionada en Hostinger + Route
+> Handlers de Next.js (`app/api/*`) con el driver **mysql2** (sin ORM). Esquema,
+> migraciones y endpoints documentados en `schema_database.md` y `tech-stack.md`.
 
-- [x] **Modelo de datos documentado** en `tech-stack.md`: **token = UUID** opaco
-      (no JWT); `Guest` (grupo/enlace con etiqueta libre, p. ej. "Familia
-      Curiel-Ramírez") + `GuestMember` (nombre fijo o a llenar, `allowPlusOne`,
-      `attending`, `diet`, +1). Campos `openedAt`/`confirmed`/`table`/`role`.
-- [ ] Elegir y documentar la **capa de datos** (DB gestionada + Route Handlers vs.
-      BaaS). *Decisión pendiente — bloquea el resto de la fase.*
-- [ ] **Acceso por token en enlace único** (`?i=<uuid>`): leer el query param y
-      resolver el grupo contra el backend; inyectarlo en `window.__PARTY__`.
+- [x] **Modelo de datos documentado** en `tech-stack.md` y `schema_database.md`:
+      **token = UUID** opaco; `guests` (grupo/enlace) + `guest_members` (persona)
+      + `roles`, `access_logs` y `rsvp_submissions`.
+- [x] **Capa de datos elegida y documentada:** MySQL (Hostinger) + `mysql2` +
+      migraciones SQL versionadas (`db/migrations/`, runner `scripts/migrate.mjs`).
+- [x] **Migraciones creadas** (`001_roles` … `005_rsvp_submissions`) y runner
+      idempotente con tabla de control `_migrations`. Semilla en `scripts/seed.mjs`.
+- [x] **Acceso por token en enlace único** (`?i=<uuid>`): `GET /api/party` resuelve
+      el grupo, registra el ingreso y el front lo inyecta en `window.__PARTY__`.
+- [x] Formulario `Rsvp` **conectado**: `POST /api/rsvp` persiste respuestas,
+      restricciones y +1 contra el token; guarda auditoría en `rsvp_submissions`.
+- [x] **Log de ingresos** (`access_logs`): quién entró, a qué hora y cuántas veces
+      (también intentos con token inválido).
+- [x] **Roles** (`roles`: novios / proveedor / invitado). El rol **novios** ve un
+      botón *Panel de novios* y entra a `/novios`.
+- [x] **Panel de novios** (`/novios`): accesos (resumen por familia: veces, primer
+      y último ingreso), conteo de confirmaciones, restricciones y **alta de
+      invitados con generación de token + enlace** (`/api/admin/*`).
+- [ ] **Correr las migraciones contra la BD de Hostinger** (`npm run migrate`) con
+      las credenciales reales en `.env`. *Requiere credenciales + Remote MySQL.*
 - [ ] **Bloqueo total del sitio**: sin token válido, pantalla de acceso con una
-      **imagen** (a aportar por el cliente, siguiendo `IMAGENES-PENDIENTES.md`); no
-      renderizar el contenido.
-- [ ] Formulario `Rsvp` **conectado** que persiste respuestas contra el token
-      (la UI ya existe; falta el `POST /api/rsvp`).
-- [ ] Validación de aforo (no exceder lugares reservados), estados de éxito/error.
-- [ ] Panel/proceso para los novios: **carga de invitados**, **generación de
-      tokens (UUID)** y **export de la lista de enlaces**.
-- [ ] Vista/export de **conteo de confirmaciones**. Considerar **tres roles**:
-      novios, proveedores, invitados (alcance de cada vista por definir).
+      **imagen** (a aportar por el cliente, `IMAGENES-PENDIENTES.md`); hoy el sitio
+      cae a un grupo de respaldo — falta el bloqueo real y la pantalla de acceso.
+- [ ] **Validación de aforo** (no exceder `seats_adults`/`seats_children`) y
+      estados de éxito/error visibles en el formulario.
+- [ ] **Export de la lista de enlaces** (CSV/copiar todo) desde el panel de novios
+      (hoy se copia enlace por enlace).
+- [ ] Definir el **alcance de la vista de proveedores** (rol `proveedor` ya existe).
 
 ## Fase 6 — Valores, cierre y pulido
 
@@ -118,46 +134,58 @@ Cada fase debería caber en un PR pequeño hacia `develop`.
 ## Notas de dependencias
 
 - Las Fases 1–4 y 6 son **estáticas** y pueden avanzar en cualquier orden.
-- La **Fase 5 (RSVP)** es la única que introduce backend: no persistir respuestas
-  hasta cerrar la **capa de datos** en `tech-stack.md`.
+- La **Fase 5 (RSVP)** introduce el backend. La **capa de datos ya está decidida y
+  montada** (MySQL Hostinger + `mysql2` + migraciones); ya no bloquea al resto.
 
-## Stoppers (bloqueos actuales)
+## Backlog consolidado (pendientes de todas las secciones)
 
-1. **Capa de datos del RSVP sin elegir.** Bloquea persistir el formulario, el
-   bloqueo por token, el panel de novios y el conteo. Backend = API routes de
-   Next; falta decidir DB gestionada vs. BaaS. *(Fase 5)*
-2. **Enlaces reales de regalos / sobre digital.** No hay URLs ni cuenta; el sobre
-   digital probablemente requiere backend. *(Fase 4)*
-3. **Casas de Airbnb concretas.** Hoy son enlaces de búsqueda por zona; faltan las
-   propiedades recomendadas definitivas. *(Fase 3)*
-4. **Imagen de la pantalla de bloqueo** (acceso sin token) a aportar por el cliente.
-   *(Fase 5)*
-5. **`scroll-snap` por sección es experimental.** Puede sentirse brusco con
-   secciones más altas que el viewport; requiere QA en móvil/escritorio y decidir
-   si se mantiene, se suaviza o se descarta. *(Fase 6)*
-6. **Fotos reales definitivas** (nítidas a ~1200px para hero y hacienda) siguen
-   pendientes según `IMAGENES-PENDIENTES.md`. *(Fase 0/1)*
+Reúne en tareas accionables lo que estaba disperso en *Stoppers*, *Next steps* y
+*Decisiones*. Marcar aquí a medida que se cierren.
 
-## Next steps (siguiente iteración sugerida)
+**Backend / datos (Fase 5)**
+- [ ] Correr `npm run migrate` contra Hostinger con credenciales reales en `.env`
+      (habilitar *Remote MySQL* si se corre desde fuera del servidor).
+- [ ] **Bloqueo total por token** + pantalla de acceso (necesita imagen del cliente).
+- [ ] Validación de **aforo** (`seats_adults`/`seats_children`) y estados éxito/error.
+- [ ] **Export de enlaces** (CSV / copiar todo) en el panel de novios.
+- [ ] Definir **alcance de la vista de proveedores** (rol `proveedor`).
+- [ ] Decidir `?i=<token>` vs. ruta `/i/<token>` (por ahora se mantiene query param).
 
-1. **Elegir la capa de datos** y documentarla en `tech-stack.md` (desbloquea Fase 5).
-2. Implementar `app/api/rsvp` (GET resolver token → `window.__PARTY__`, POST
-   persistir) y el **bloqueo por token** + pantalla de acceso.
-3. **Pase de responsive de escritorio** completo (centrado/tipografía) con revisión
-   del cliente, sin romper la identidad del diseño.
-4. Redacción **definitiva de la historia** (pareja) y del copy final de `Values`
-5. QA del `scroll-snap` y de las reacciones del gato en dispositivos reales.
+**Contenido y copy**
+- [ ] **Agregar la canción** de la historia/pedida (ver Fase 2; requiere MP3 + título).
+- [ ] Redacción **definitiva de la historia** (pareja).
+- [ ] Copy final de la sección `Values` (Fase 6).
+- [ ] `Footer` con datos de contacto/agradecimiento (Fase 6).
 
-## Decisiones pendientes
+**Regalos (Fase 4)**
+- [ ] Enlaces reales: lista de regalos / transferencia / **sobre digital**
+      (el sobre digital puede requerir backend).
 
-1. **Política de menores.** `mission.md` fija *solo adultos*, pero la nota del
-   cliente incluye un ejemplo con miembro `menor`. Reconciliar copy (solo adultos)
-   vs. modelo de datos (admite `type: menor`) antes de construir el backend.
-2. **Capa de datos**: DB gestionada (Postgres/SQLite en Hostinger, Neon/Supabase-DB)
-   con Route Handlers **vs.** BaaS (Supabase/Firebase).
-3. **Roles y vistas**: alcance concreto de las vistas **novios / proveedores /
-   invitados** y qué ve/puede cada token.
-4. **`?i=<token>` vs. ruta `/i/<token>`**: se mantiene query param salvo necesidad.ari
+**Logística (Fase 3)**
+- [ ] Fijar **casas de Airbnb concretas** (hoy son búsquedas por zona).
+
+**Diseño / QA**
+- [ ] **Pase de responsive de escritorio** completo (centrado/tipografía) con el
+      cliente, sin romper la identidad del diseño.
+- [ ] QA del `scroll-snap` (experimental) y de las reacciones del gato en
+      dispositivos reales; decidir si se mantiene, suaviza o descarta.
+- [ ] **Fotos reales definitivas** (~1200px nítidas para hero y hacienda) según
+      `IMAGENES-PENDIENTES.md`.
+
+**Calidad y lanzamiento (Fase 7)**
+- [ ] Rendimiento (imágenes optimizadas, LCP móvil), accesibilidad básica,
+      SEO/social, QA end-to-end del RSVP en producción y reparto final de enlaces.
+
+## Decisiones (estado)
+
+1. **Política de menores.** ✅ Resuelto: el **copy público es "solo adultos / sin
+   infancias"**, pero el esquema admite `type: menor` y `seats_children` para el
+   caso de menores de la familia. Copy y datos quedan reconciliados.
+2. **Capa de datos.** ✅ Resuelto: **MySQL gestionada en Hostinger + Route Handlers
+   con `mysql2`** (sin ORM), migraciones SQL versionadas. Ver `schema_database.md`.
+3. **Roles y vistas.** Parcial: existen **novios / proveedor / invitado**; novios
+   con panel `/novios` implementado. Falta definir el **alcance de proveedores**.
+4. **`?i=<token>` vs. `/i/<token>`.** Se mantiene el query param salvo necesidad.
 
 
 

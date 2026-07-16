@@ -181,8 +181,8 @@ function Night() {
 
       <div className="divider reveal"><span>La pregunta · Valle de Bravo</span></div>
 
-      <h2 className="reveal" style={{ marginTop: 34 }}>Una cena<br /><em>que lo cambió todo.</em></h2>
-      <p className="lead reveal">Arriba estaba todo listo: la mesa, las velas, las flores, la bocina esperando. Puse la canción, ella entró y empezó a llorar. Yo temblaba. Entonces dije las palabras que siempre soñó escuchar.</p>
+      <h2 className="reveal" style={{ marginTop: 34 }}>En una terraza de<br /><em>Valle de Bravo.</em></h2>
+      <p className="lead reveal">El &ldquo;sí&rdquo; para siempre fue en una terraza en Valle de Bravo, en su aniversario de un año de novios. Pero él lo había decidido desde los tres meses de conocerla. Él dijo las únicas palabras con las que ella aceptaría, palabra por palabra. Lo que comenzó a las 7:20 de un 6 de noviembre acabaría esa noche: ya no son novios, ahora son prometidos. Él se arrodilló, ella dijo que sí, y los dos lo sellaron con un beso.</p>
       <div className="twin reveal">
         <img src={imgPropuesta} alt="La propuesta" />
         <img src={imgAnillo} alt="El anillo y las lilis" />
@@ -536,8 +536,24 @@ function Rsvp() {
   const submit = () => {
     if (done) return
 
-    // TODO(backend): POST /api/rsvp con { token, resp, plus }. Sin backend aún,
-    // solo se ejecuta la animación local.
+    // Persistencia contra el backend (POST /api/rsvp). Se envía solo si hay token
+    // (enlace ?i=<uuid>); la animación se dispara igual de forma optimista.
+    const token = typeof window !== 'undefined' ? window.__TOKEN__ : null
+    if (token) {
+      const responses = party.guests.map((g) => ({
+        memberId: g.id,
+        attending: resp[g.id].attending === true,
+        name: resp[g.id].name || '',
+        diet: resp[g.id].hasDiet ? resp[g.id].diet : '',
+      }))
+      const plusPayload = { enabled: plus.enabled, name: plus.name, diet: plus.hasDiet ? plus.diet : '' }
+      fetch('/api/rsvp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, responses, plus: plusPayload }),
+      }).catch((err) => console.error('[rsvp] no se pudo guardar:', err))
+    }
+
     const anyGoing = summary.going.length > 0
     setDeclined(!anyGoing)
     setOpen(false)          // cerrar el cuadro emergente
@@ -1065,7 +1081,47 @@ function AudioController() {
   )
 }
 
+// Botón flotante que solo ven los novios (rol resuelto por su token): lleva al
+// panel de accesos y confirmaciones.
+function NoviosButton({ token }) {
+  if (!token) return null
+  return (
+    <a className="novios-fab" href={`/novios?token=${encodeURIComponent(token)}`}>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 3v18h18" /><path d="M7 14l3-3 3 3 4-5" />
+      </svg>
+      <span>Panel de novios</span>
+    </a>
+  )
+}
+
 export default function WeddingApp() {
+  // Token del enlace (?i=<uuid>). Al resolverlo contra el backend se registra el
+  // acceso (log de ingresos) y se personaliza el grupo. `dataKey` remonta el
+  // sobre (Opener) y el RSVP cuando llegan los datos reales, sin tocar el árbol
+  // que monta las animaciones GSAP (que corre una sola vez).
+  const [dataKey, setDataKey] = useState('boot')
+  const [noviosToken, setNoviosToken] = useState(null)
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const token = params.get('i') || params.get('token')
+    if (!token) return
+    window.__TOKEN__ = token
+    let cancel = false
+    fetch(`/api/party?i=${encodeURIComponent(token)}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (cancel || !d || !d.party) return
+        window.__PARTY__ = d.party
+        window.__INVITADO__ = d.party.family
+        setDataKey(d.party.id)
+        if (d.party.role === 'novios') setNoviosToken(token)
+      })
+      .catch((err) => console.error('[party] no se pudo resolver el token:', err))
+    return () => { cancel = true }
+  }, [])
+
   // Scroll con GSAP: reveal-on-scroll (mismo fade+translateY y stagger que el
   // diseño) + parallax sutil en las imágenes con contenedor overflow:hidden.
   useGSAP(() => {
@@ -1113,8 +1169,9 @@ export default function WeddingApp() {
 
   return (
     <>
-      <Opener />
+      <Opener key={`op-${dataKey}`} />
       <AudioController />
+      <NoviosButton token={noviosToken} />
       <div className="device">
         <Nav />
         <Hero />
@@ -1126,7 +1183,7 @@ export default function WeddingApp() {
         <Stay />
         <Gifts />
         <Values />
-        <Rsvp />
+        <Rsvp key={`rsvp-${dataKey}`} />
         <Footer />
       </div>
       <CatWalker />

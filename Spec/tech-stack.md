@@ -30,18 +30,27 @@ como **app Node** en Hostinger, la vía natural son las **API routes de Next.js*
 (`app/api/*`) dentro del mismo proyecto — sin servicio ni hosting aparte.
 
 - **API:** rutas `app/api/*` (Route Handlers de Next 15) para resolver el token
-  del invitado y persistir la confirmación.
-- **Persistencia (a decidir en la Fase de RSVP):** opciones candidatas, todas
-  compatibles con la app Node:
+  del invitado y persistir la confirmación. Implementadas:
+  - `GET  /api/party?i=<token>` — resuelve el grupo, registra el ingreso y
+    devuelve el payload que el front inyecta en `window.__PARTY__`.
+  - `POST /api/rsvp` — persiste respuestas, restricciones y +1; audita en
+    `rsvp_submissions`.
+  - `GET  /api/admin/access` — panel de novios: accesos + conteo (rol `novios`).
+  - `GET|POST /api/admin/guests` — alta de invitados y generación de enlaces.
+- **Persistencia — ✅ DECIDIDA:** **MySQL gestionada en Hostinger + Route Handlers
+  con el driver `mysql2`** (sin ORM). Migraciones SQL versionadas en
+  `db/migrations/` aplicadas por `scripts/migrate.mjs`. El esquema completo
+  (tablas `roles`, `guests`, `guest_members`, `access_logs`, `rsvp_submissions`)
+  está documentado en **`schema_database.md`**.
 
-| Opción | Encaje | Notas |
-|---|---|---|
-| **DB gestionada + Route Handlers** (Postgres/SQLite en Hostinger, o Neon/Supabase-DB) | Todo dentro de la app Next | Menos piezas; una sola URL |
-| **BaaS (Supabase / Firebase)** | "Backend propio" gestionado | RSVP + panel rápido; menor esfuerzo |
+| Opción | Estado |
+|---|---|
+| **MySQL (Hostinger) + Route Handlers + `mysql2`** | ✅ **Elegida** — menos piezas, misma app/deploy |
+| ~~BaaS (Supabase / Firebase)~~ | Descartada |
 
-> ✅ **Resuelto el bloqueo anterior.** Hostinger ya ejecuta Node (`next start`),
-> así que el RSVP vive en el mismo despliegue vía API routes. Solo queda elegir la
-> **capa de datos** (tabla arriba) y documentar la elección aquí cuando se tome.
+> ✅ **Bloqueo resuelto.** Hostinger ejecuta Node (`next start`); el RSVP vive en
+> el mismo despliegue vía API routes contra la MySQL gestionada. Config por
+> variables `DB_*` en `.env` (ver `.env.example`).
 
 ## Acceso por invitación (token en enlace único)
 
@@ -108,12 +117,20 @@ asistentes** (aforo) y **revocar** un enlace (invalidar el token) si hace falta.
 > `type`/`children` para no bloquear, pero **hay que reconciliar** copy público
 > (solo adultos) vs. datos (admite `menor`) antes de construir el backend.
 
-### Roles y vistas (a definir)
+### Roles y vistas
 
-El cliente pide considerar **tres tipos de usuario** por token/vista:
-**novios** (administración: alta de invitados, tokens, conteo), **proveedores**
-(vista/acceso acotado, por definir) e **invitados** (RSVP). El campo `role` en
-`Guest` los distingue; el alcance de cada vista queda **pendiente de definir**.
+Tabla `roles` (sembrada): **novios**, **proveedor**, **invitado**. `guests.role_id`
+apunta a ella.
+
+- **novios** — administración. Al entrar con su token, el front muestra el botón
+  *Panel de novios* y da acceso a **`/novios`**: resumen de accesos por familia
+  (quién entró, hora, cuántas veces), conteo de confirmaciones, restricciones
+  alimentarias y **alta de invitados con generación de token + enlace**.
+- **invitado** — RSVP estándar.
+- **proveedor** — existe el rol; **alcance de su vista pendiente de definir**.
+
+El **log de ingresos** vive en `access_logs` (un registro por apertura de enlace,
+incluidos intentos con token inválido) y alimenta el panel de novios.
 
 ## Servicios externos previstos
 

@@ -624,3 +624,60 @@ body.modal-open{overflow:hidden;}
 
 /* El scroll-snap por sección (experimental) se retiró: en desktop enganchaba
    cada sección y hacía el scroll a tirones, menos fluido que en móvil. */
+
+/* ===========================================================================
+   Panel de novios (/novios) y botón flotante. No forma parte del diseño de la
+   invitación: es una vista de administración, por eso vive en su propio bloque
+   y reutiliza solo la paleta (--lila, --ink, etc.).
+   =========================================================================== */
+.novios-fab{position:fixed; right:14px; top:14px; z-index:60; display:inline-flex; align-items:center; gap:8px;
+  background:var(--lila); color:#fff; text-decoration:none; font-family:'JetBrains Mono',monospace; font-size:10px;
+  letter-spacing:0.08em; text-transform:uppercase; padding:9px 14px; border-radius:30px; box-shadow:0 6px 20px rgba(110,84,151,.35);}
+.novios-fab:hover{background:var(--lila-deep);}
+
+.np-wrap{max-width:1040px; margin:0 auto; padding:28px 18px 80px; color:var(--ink); background:#F4F1EB; min-height:100vh;}
+.np-head{display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:22px;}
+.np-kicker{font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:0.2em; text-transform:uppercase; color:var(--lila);}
+.np-head h1{font-family:'Cormorant Garamond',serif; font-size:30px; line-height:1.1; margin-top:6px;}
+.np-msg,.np-error,.np-result{font-size:13px; line-height:1.6;}
+.np-error{color:#a23; background:rgba(170,34,51,.08); padding:10px 14px; border-radius:10px;}
+.np-result{margin-top:12px; color:var(--ink-soft);}
+.np-result code,.np-table code{font-family:'JetBrains Mono',monospace; font-size:11px; background:rgba(138,111,184,.1); padding:2px 6px; border-radius:5px; word-break:break-all;}
+
+.np-cards{display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-bottom:26px;}
+.np-card{background:#fff; border:1px solid var(--line); border-radius:14px; padding:16px;}
+.np-card b{display:block; font-family:'Cormorant Garamond',serif; font-size:30px; color:var(--lila-deep); line-height:1;}
+.np-card small{display:block; font-size:11px; color:var(--ink-soft); margin-top:6px;}
+
+.np-section{margin-bottom:30px;}
+.np-section h2{font-family:'Cormorant Garamond',serif; font-size:20px; margin-bottom:12px; color:var(--ink);}
+.np-table-wrap{overflow-x:auto; border:1px solid var(--line); border-radius:12px; background:#fff;}
+.np-table{width:100%; border-collapse:collapse; font-size:12.5px;}
+.np-table th,.np-table td{text-align:left; padding:10px 12px; border-bottom:1px solid var(--line); white-space:nowrap;}
+.np-table th{font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:0.1em; text-transform:uppercase; color:var(--ink-soft); background:#FAF8F4;}
+.np-table tr:last-child td{border-bottom:none;}
+.np-empty{color:var(--ink-soft); text-align:center; font-style:italic;}
+.np-tag{font-family:'JetBrains Mono',monospace; font-size:8.5px; letter-spacing:0.08em; text-transform:uppercase; padding:3px 8px; border-radius:20px; background:rgba(138,111,184,.12); color:var(--lila-deep);}
+.np-tag.np-novios{background:rgba(110,84,151,.18);}
+.np-tag.np-proveedor{background:rgba(91,85,99,.14); color:var(--ink-soft);}
+.np-diets{list-style:none; margin:0; padding:0; display:flex; flex-wrap:wrap; gap:8px;}
+.np-diets li{background:#fff; border:1px solid var(--line); border-radius:20px; padding:6px 12px; font-size:12px;}
+.np-diets li b{color:var(--lila-deep);}
+
+.np-btn{background:var(--lila); color:#fff; border:none; border-radius:24px; padding:9px 18px; font-size:12px; cursor:pointer; font-family:'Inter',sans-serif;}
+.np-btn:hover{background:var(--lila-deep);}
+.np-btn:disabled{opacity:.6; cursor:default;}
+.np-link{background:none; border:none; color:var(--lila-deep); cursor:pointer; font-size:12px; text-decoration:underline; padding:0;}
+
+.np-form{display:flex; flex-direction:column; gap:12px; background:#fff; border:1px solid var(--line); border-radius:14px; padding:18px;}
+.np-form label{display:flex; flex-direction:column; gap:5px; font-size:12px; color:var(--ink-soft);}
+.np-form input,.np-form select,.np-form textarea{font-family:'Inter',sans-serif; font-size:13px; color:var(--ink); border:1px solid var(--line); border-radius:8px; padding:9px 11px; background:#FAF8F4;}
+.np-form textarea{resize:vertical;}
+.np-row{display:flex; gap:12px; flex-wrap:wrap;}
+.np-row label{flex:1; min-width:110px;}
+.np-check{flex-direction:row!important; align-items:center; gap:8px!important;}
+.np-check input{width:auto;}
+
+@media(min-width:640px){
+  .np-cards{grid-template-columns:repeat(4,1fr);}
+}
