@@ -1028,8 +1028,11 @@ function AudioController() {
     const vol = mutedRef.current ? 0 : AUDIO_VOL
     const [inEl, outEl] = to === 'b' ? [b, a] : [a, b]
     inEl.play().catch(() => {})
-    gsap.to(inEl, { volume: vol, duration: 1.6, ease: 'sine.inOut' })
-    gsap.to(outEl, { volume: 0, duration: 1.6, ease: 'sine.inOut', onComplete: () => outEl.pause() })
+    // `overwrite: true` mata cualquier tween de volumen previo sobre el mismo
+    // elemento. Sin esto, un crossfade en vuelo peleaba con el fundido del
+    // botón de silencio y volvía a subir el volumen (la canción "no se apagaba").
+    gsap.to(inEl, { volume: vol, duration: 1.6, ease: 'sine.inOut', overwrite: true })
+    gsap.to(outEl, { volume: 0, duration: 1.6, ease: 'sine.inOut', overwrite: true, onComplete: () => outEl.pause() })
   }
 
   // Fundido cruzado enganchado a la sección Boda.
@@ -1050,11 +1053,17 @@ function AudioController() {
       mutedRef.current = next
       const active = phaseRef.current === 'b' ? bRef.current : aRef.current
       if (next) {
-        if (aRef.current) gsap.to(aRef.current, { volume: 0, duration: 0.4 })
-        if (bRef.current) gsap.to(bRef.current, { volume: 0, duration: 0.4 })
+        // `muted` nativo además del fundido: es inmediato y ningún tween en
+        // vuelo puede revertirlo, así que el silencio siempre se respeta.
+        for (const el of [aRef.current, bRef.current]) {
+          if (!el) continue
+          el.muted = true
+          gsap.to(el, { volume: 0, duration: 0.4, overwrite: true })
+        }
       } else if (active) {
+        for (const el of [aRef.current, bRef.current]) { if (el) el.muted = false }
         active.play().catch(() => {})
-        gsap.to(active, { volume: AUDIO_VOL, duration: 0.4 })
+        gsap.to(active, { volume: AUDIO_VOL, duration: 0.4, overwrite: true })
       }
       return next
     })

@@ -36,7 +36,11 @@ como **app Node** en Hostinger, la vía natural son las **API routes de Next.js*
   - `POST /api/rsvp` — persiste respuestas, restricciones y +1; audita en
     `rsvp_submissions`.
   - `GET  /api/admin/access` — panel de novios: accesos + conteo (rol `novios`).
-  - `GET|POST /api/admin/guests` — alta de invitados y generación de enlaces.
+  - `GET|POST /api/admin/guests` — alta de invitados y **generación de enlaces
+    listos para entrar** (`{ link: "<SITE_URL>/?i=<token>" }`). El `POST` acepta
+    `role` para fijar el **tipo** del enlace: `novios` (admin, ve `/novios`),
+    `proveedor` o `invitado` (por defecto). Así se generan URLs de cada tipo,
+    incluida la de los **novios**. Base de la URL vía `NEXT_PUBLIC_SITE_URL`.
 - **Persistencia — ✅ DECIDIDA:** **MySQL gestionada en Hostinger + Route Handlers
   con el driver `mysql2`** (sin ORM). Migraciones SQL versionadas en
   `db/migrations/` aplicadas por `scripts/migrate.mjs`. El esquema completo

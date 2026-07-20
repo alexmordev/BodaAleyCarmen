@@ -37,7 +37,7 @@ Cada fase debería caber en un PR pequeño hacia `develop`.
       pareja (ver Decisiones pendientes).
 - [x] Fotos reales: `nosotros-cena.jpg`, `propuesta.jpg`, `anillo-flores.jpg`.
 - [~] Ajuste fino de estilo sin alterar la identidad del diseño.
-- [ ] **Agregar la canción** de la historia/pedida ("Puse la canción, ella
+- [x] **Agregar la canción** de la historia/pedida ("Puse la canción, ella
       entró…"). Existen los estilos `.song` sin usar y el `AudioController` de
       fondo; falta decidir e implementar: reproductor visible con la canción
       concreta, o integrarla en el crossfade de audio. Requiere el MP3 y el
@@ -96,8 +96,10 @@ Cada fase debería caber en un PR pequeño hacia `develop`.
       botón *Panel de novios* y entra a `/novios`.
 - [x] **Panel de novios** (`/novios`): accesos (resumen por familia: veces, primer
       y último ingreso), conteo de confirmaciones, restricciones y **alta de
-      invitados con generación de token + enlace** (`/api/admin/*`).
-- [ ] **Correr las migraciones contra la BD de Hostinger** (`npm run migrate`) con
+      invitados con generación de token + enlace listo para entrar** (`/api/admin/*`).
+      El alta acepta el **tipo/rol** del enlace (`novios` / `proveedor` /
+      `invitado`), de modo que se puede emitir también la URL de los **novios**.
+- [x] **Correr las migraciones contra la BD de Hostinger** (`npm run migrate`) con
       las credenciales reales en `.env`. *Requiere credenciales + Remote MySQL.*
 - [ ] **Bloqueo total del sitio**: sin token válido, pantalla de acceso con una
       **imagen** (a aportar por el cliente, `IMAGENES-PENDIENTES.md`); hoy el sitio
@@ -130,6 +132,21 @@ Cada fase debería caber en un PR pequeño hacia `develop`.
 - [ ] Compartir el enlace final con los invitados.
 
 ---
+
+### NOTAS DE ERRORES
+1. Failed to load resource: the server responded with a status of 404 ()
+2. Uncaught ChunkLoadError: Loading chunk 974 failed.
+	(error: https://aleycarmen.site/_next/static/chunks/app/page-84d224d1e48376d2.js)
+    at Object.j (webpack-4a462cecab786e93.js:1:2739)
+    at webpack-4a462cecab786e93.js:1:1138
+    at Array.reduce (<anonymous>)
+    at r.e (webpack-4a462cecab786e93.js:1:1117)
+    at c (255-3981a3d1f3561bd8.js:1:136606)
+    at 255-3981a3d1f3561bd8.js:1:151371
+    at t (255-3981a3d1f3561bd8.js:1:152829)
+   3.  Y además no se puede abrir en telefonos, y en ocaciones la cancion no se puede apagar,
+   4. La imagen se distorsiona en version movil, nosotros-sillon.jpg
+
 
 ## Notas de dependencias
 
