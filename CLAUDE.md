@@ -74,6 +74,29 @@ repo, ejecuta `npm install` + `npm run build` y arranca la app con
 2. **Build command:** `npm run build` · **Start command:** `npm run start`.
 3. Node 24. La app escucha el puerto que Hostinger inyecte (`$PORT`).
 
+## Aislamiento entre worktrees
+
+El repo tiene dos worktrees de git activos:
+
+- **Padre:** `website/` (rama `main`)
+- **Hijo:** `website/firstTree/` (rama `firstTree`) — una carpeta por debajo del padre
+
+Reglas (aplican a la sesión de Claude que se abra en **cualquiera** de los dos):
+
+1. **Trabaja solo en tu propio worktree.** Todo cambio de código, config, assets o
+   documentación que se pida se aplica en el árbol donde está abierta la sesión.
+   Nunca editar, mover ni borrar archivos del otro worktree, aunque sean
+   accesibles por ruta relativa (`../` desde el hijo, `firstTree/` desde el padre).
+2. **Lectura sí, escritura no.** Está permitido leer el otro árbol para consultar
+   o comparar. Está prohibido escribir en él, y también ejecutar ahí comandos que
+   modifiquen estado (`git checkout`, `npm install`, builds, scripts).
+3. **Excepción: las specs son compartidas.** El contenido de `Spec/` es común a
+   ambos árboles. Aun así, se edita **en el árbol actual** y se propaga por git
+   (commit + merge), nunca escribiendo directamente en la carpeta `Spec/` del otro
+   worktree.
+4. **Si una petición exige tocar el otro árbol**, no hacerlo: avisar al usuario y
+   pedir que abra una sesión de Claude en ese worktree.
+
 ## Convenciones
 
 - Mensajes de commit en español, imperativo, con prefijo tipo `feat:`, `fix:`,

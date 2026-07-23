@@ -34,6 +34,15 @@ export async function POST(req) {
     const result = await persistRsvp(guest, { responses, plus }, { ip: clientIp(req), ua: userAgent(req) })
     return NextResponse.json({ ok: true, ...result })
   } catch (err) {
+    // Aforo excedido: es culpa del payload, no del servidor. El mensaje ya viene
+    // redactado para mostrarse tal cual al invitado.
+    if (err.code === 'AFORO') {
+      return NextResponse.json({ error: err.message, code: 'AFORO' }, { status: 409 })
+    }
+    // Rol exento (novios/proveedor): no confirma. No es error del servidor.
+    if (err.code === 'NO_RSVP') {
+      return NextResponse.json({ error: err.message, code: 'NO_RSVP' }, { status: 403 })
+    }
     console.error('[api/rsvp] persist error:', err.message)
     return NextResponse.json({ error: 'No se pudo guardar la confirmacion' }, { status: 500 })
   }

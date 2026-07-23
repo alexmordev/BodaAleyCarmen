@@ -5,6 +5,7 @@ import gsap from 'gsap'
 import { useGSAP } from '@gsap/react'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { CustomEase } from 'gsap/CustomEase'
+import { BANK } from './data/gifts'
 
 gsap.registerPlugin(useGSAP, ScrollTrigger, CustomEase)
 
@@ -13,6 +14,11 @@ const REVEAL_EASE = CustomEase.create('reveal', 'M0,0 C0.2,0.7 0.2,1 1,1')
 
 // Imágenes servidas desde /public/images (Next.js sirve /public en la raíz).
 const imgSillon = '/images/nosotros-sillon.jpg'
+// Recorte vertical para móvil (<768px): la foto original es apaisada (4:3) y el
+// hueco del hero en móvil es vertical (366x400), así que `object-fit:cover`
+// recortaba a Alejandro contra el borde. Este recorte está encuadrado sobre la
+// pareja y ya contempla el zoom 1.12 del parallax.
+const imgSillonMovil = '/images/nosotros-sillon-movil.jpg'
 const imgCena = '/images/nosotros-cena.jpg'
 const imgPropuesta = '/images/propuesta.jpg'
 const imgAnillo = '/images/anillo-flores.jpg'
@@ -95,7 +101,7 @@ function Opener() {
 }
 
 // --- Nav ---
-function Nav() {
+function Nav({ rsvpRequired = true }) {
   const [scrolled, setScrolled] = useState(false)
   useGSAP(() => {
     setScrolled(window.scrollY > 20)
@@ -116,7 +122,7 @@ function Nav() {
         <li><a href="#hospedaje">Hospedaje</a></li>
       </ul>
       <div className="nav-date">07 · XI · 2026</div>
-      <a className="cta" href="#rsvp">Confirmar</a>
+      {rsvpRequired && <a className="cta" href="#rsvp">Confirmar</a>}
     </nav>
   )
 }
@@ -157,7 +163,10 @@ function Hero() {
       <h1 className="reveal">Alejandro<br /><em>&amp;</em> Carmen</h1>
       <p className="sub reveal">Nos casamos y queremos que estés ahí..</p>
       <div className="heroimg reveal">
-        <img src={imgSillon} alt="Alejandro y Carmen" />
+        <picture>
+          <source media="(max-width: 767.98px)" srcSet={imgSillonMovil} />
+          <img src={imgSillon} alt="Alejandro y Carmen" />
+        </picture>
       </div>
       <Countdown />
     </section>
@@ -297,6 +306,35 @@ function Stay() {
 }
 
 // --- Regalos ---
+// Deliberadamente minimalista: los datos de la cuenta y un botón de copiar. El
+// monto lo decide cada quien y la transferencia ocurre en su banco; el sitio no
+// pide monto ni registra nada.
+function CopyField({ label, value }) {
+  const [copied, setCopied] = useState(false)
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(value)
+    } catch {
+      return // sin portapapeles (http o permiso denegado): el dato sigue visible
+    }
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1600)
+  }
+
+  return (
+    <div className="bank-row">
+      <div className="bank-label">{label}</div>
+      <div className="bank-value">
+        <span>{value}</span>
+        <button type="button" className="bank-copy" onClick={copy} aria-label={`Copiar ${label}`}>
+          {copied ? 'Copiado' : 'Copiar'}
+        </button>
+      </div>
+    </div>
+  )
+}
+
 function Gifts() {
   return (
     <section className="gifts" data-screen-label="Regalos">
@@ -309,6 +347,15 @@ function Gifts() {
           </svg>
         </div>
         <p>Si de todos modos quieres consentirnos, lo que más nos ayudaría es un <b>regalo en efectivo para nuestra luna de miel</b>. Cada aporte nos acerca al viaje que soñamos juntos.</p>
+      </div>
+
+      <div className="bank reveal">
+        <div className="bank-title">Transferencia</div>
+        <CopyField label="Banco" value={BANK.banco} />
+        <CopyField label="Titular" value={BANK.titular} />
+        <CopyField label="CLABE" value={BANK.clabe} />
+        {BANK.cuenta ? <CopyField label="Cuenta" value={BANK.cuenta} /> : null}
+        <CopyField label="Concepto" value={BANK.concepto} />
       </div>
     </section>
   )
@@ -412,8 +459,37 @@ function getParty() {
   return {
     family: guest,
     allowPlusOne: false,
-    guests: [{ id: 'p', name: guest, principal: true }],
+    seats: { adults: 0, children: 0 },   // 0 = sin límite declarado
+    guests: [{ id: 'p', name: guest, principal: true, type: 'adulto' }],
   }
+}
+
+// Aforo: cuenta adultos y menores confirmados y compara con los lugares del
+// grupo. Espejo de `checkCapacity` en lib/repo.js — el servidor manda, esto solo
+// evita un viaje de ida y vuelta para decir lo mismo. Un límite en 0 significa
+// "sin límite declarado" y no se aplica.
+function capacityError(party, resp, plus) {
+  const seats = party.seats || {}
+  const maxAdults = Number(seats.adults) || 0
+  const maxChildren = Number(seats.children) || 0
+  if (!maxAdults && !maxChildren) return null
+
+  let adults = 0
+  let children = 0
+  party.guests.forEach((g) => {
+    if (!resp[g.id]?.attending) return
+    if (g.type === 'menor') children++
+    else adults++
+  })
+  if (party.allowPlusOne && plus.enabled && plus.name.trim()) adults++
+
+  if (maxAdults > 0 && adults > maxAdults) {
+    return `Tu invitación tiene ${maxAdults} ${maxAdults === 1 ? 'lugar' : 'lugares'} para adultos y estás confirmando ${adults}. Si crees que es un error, escríbenos.`
+  }
+  if (maxChildren > 0 && children > maxChildren) {
+    return `Tu invitación tiene ${maxChildren} ${maxChildren === 1 ? 'lugar' : 'lugares'} para menores y estás confirmando ${children}. Si crees que es un error, escríbenos.`
+  }
+  return null
 }
 
 function initResponses(party) {
@@ -477,6 +553,8 @@ function Rsvp() {
   const [done, setDone] = useState(false)
   const [pulse, setPulse] = useState(false)
   const [declined, setDeclined] = useState(false)
+  const [sending, setSending] = useState(false)   // POST /api/rsvp en vuelo
+  const [sendError, setSendError] = useState(null) // fallo de red o aforo
   const btnRef = useRef(null)                  // botón que dispara el modal (origen del confeti)
   const canvasRef = useRef(null)
   const burst = useConfetti(canvasRef)
@@ -515,6 +593,11 @@ function Rsvp() {
     if (missingName) { window.alert('Escribe el nombre de cada invitado que asistirá.'); return }
     if (plus.enabled && !plus.name.trim()) { window.alert('Escribe el nombre de tu acompañante.'); return }
 
+    // Aforo: no dejamos pasar al repaso si el grupo excede sus lugares.
+    const overCapacity = capacityError(party, resp, plus)
+    if (overCapacity) { setSendError(overCapacity); return }
+    setSendError(null)
+
     // Construir resumen quién va / quién no ({ name, note, diet }).
     const going = []
     const notGoing = []
@@ -532,12 +615,14 @@ function Rsvp() {
     setStep('review')
   }
 
-  // Paso 2: envía la confirmación y dispara la animación.
-  const submit = () => {
-    if (done) return
+  // Paso 2: envía la confirmación y, solo si el backend la aceptó, dispara la
+  // animación de cierre. Antes se celebraba de forma optimista y un fallo de red
+  // o de aforo dejaba al invitado creyendo que había confirmado.
+  const submit = async () => {
+    if (done || sending) return
 
-    // Persistencia contra el backend (POST /api/rsvp). Se envía solo si hay token
-    // (enlace ?i=<uuid>); la animación se dispara igual de forma optimista.
+    // Persistencia contra el backend (POST /api/rsvp). Sin token (enlace ?i=…)
+    // no hay nada que guardar: se celebra igual, es el modo de desarrollo.
     const token = typeof window !== 'undefined' ? window.__TOKEN__ : null
     if (token) {
       const responses = party.guests.map((g) => ({
@@ -547,11 +632,29 @@ function Rsvp() {
         diet: resp[g.id].hasDiet ? resp[g.id].diet : '',
       }))
       const plusPayload = { enabled: plus.enabled, name: plus.name, diet: plus.hasDiet ? plus.diet : '' }
-      fetch('/api/rsvp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, responses, plus: plusPayload }),
-      }).catch((err) => console.error('[rsvp] no se pudo guardar:', err))
+
+      setSending(true)
+      setSendError(null)
+      try {
+        const res = await fetch('/api/rsvp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token, responses, plus: plusPayload }),
+        })
+        const data = await res.json().catch(() => ({}))
+        if (!res.ok) {
+          // 409 = aforo excedido; su mensaje ya viene redactado para el invitado.
+          setSendError(data.error || 'No pudimos guardar tu confirmación. Inténtalo de nuevo en un momento.')
+          setSending(false)
+          return
+        }
+      } catch (err) {
+        console.error('[rsvp] no se pudo guardar:', err)
+        setSendError('No pudimos conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.')
+        setSending(false)
+        return
+      }
+      setSending(false)
     }
 
     const anyGoing = summary.going.length > 0
@@ -713,17 +816,25 @@ function Rsvp() {
             </div>
 
             <div className="rsvp-dialog-foot">
+              {sendError && (
+                <p className="rsvp-alert" role="alert">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="9" /><path d="M12 8v5M12 16.5v.01" />
+                  </svg>
+                  <span>{sendError}</span>
+                </p>
+              )}
               {step === 'form' ? (
                 <button type="button" className="btn" onClick={review}>
                   <span className="lbl">Continuar</span>
                 </button>
               ) : (
                 <div className="rsvp-foot-actions">
-                  <button type="button" className="btn ghost" onClick={() => setStep('form')}>
+                  <button type="button" className="btn ghost" onClick={() => setStep('form')} disabled={sending}>
                     <span className="lbl">Volver a editar</span>
                   </button>
-                  <button type="button" className="btn" onClick={submit}>
-                    <span className="lbl">Enviar confirmación</span>
+                  <button type="button" className="btn" onClick={submit} disabled={sending}>
+                    <span className="lbl">{sending ? 'Enviando…' : 'Enviar confirmación'}</span>
                   </button>
                 </div>
               )}
@@ -1104,6 +1215,39 @@ function NoviosButton({ token }) {
   )
 }
 
+// En desarrollo el sitio se abre sin token para poder trabajar en local. En
+// producción el bloqueo es total.
+const DEV_OPEN = process.env.NODE_ENV !== 'production'
+
+// Pantalla de acceso. Sin un token válido el sitio no se renderiza: los datos de
+// los invitados y los bancarios de la mesa de regalos solo son para quien
+// recibió un enlace. Es un cierre de cara al invitado, no una barrera
+// criptográfica — quien tenga un token válido ve todo el bundle.
+function Gate({ state }) {
+  return (
+    <div className="gate">
+      <div className="gate-halo" aria-hidden="true"></div>
+      <div className="gate-card">
+        <div className="gate-kicker">07 · XI · 2026</div>
+        <div className="gate-lg">Alejandro <span className="amp">&amp;</span> Carmen</div>
+        {state === 'checking' ? (
+          <p className="gate-msg">Abriendo tu invitación…</p>
+        ) : (
+          <>
+            <div className="gate-rule" aria-hidden="true"></div>
+            <p className="gate-msg">Esta invitación es <em>personal</em>.</p>
+            <p className="gate-sub">
+              Para entrar necesitas el enlace único que te enviamos. Si lo
+              perdiste o no funciona, escríbenos y con gusto te lo reenviamos.
+            </p>
+            <p className="gate-fine">Nos vemos el 7 de noviembre de 2026</p>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export default function WeddingApp() {
   // Token del enlace (?i=<uuid>). Al resolverlo contra el backend se registra el
   // acceso (log de ingresos) y se personaliza el grupo. `dataKey` remonta el
@@ -1111,29 +1255,44 @@ export default function WeddingApp() {
   // que monta las animaciones GSAP (que corre una sola vez).
   const [dataKey, setDataKey] = useState('boot')
   const [noviosToken, setNoviosToken] = useState(null)
+  // ¿Este grupo confirma? Los roles exentos (novios/proveedor) no ven el RSVP.
+  // Por defecto true: en dev sin token (DEV_OPEN) el formulario sí se muestra.
+  const [rsvpRequired, setRsvpRequired] = useState(true)
+  // 'checking' | 'granted' | 'denied' — mientras no sea 'granted' se muestra la
+  // pantalla de acceso en vez del sitio.
+  const [access, setAccess] = useState('checking')
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const token = params.get('i') || params.get('token')
-    if (!token) return
+    if (!token) { setAccess(DEV_OPEN ? 'granted' : 'denied'); return }
     window.__TOKEN__ = token
     let cancel = false
     fetch(`/api/party?i=${encodeURIComponent(token)}`)
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
-        if (cancel || !d || !d.party) return
+        if (cancel) return
+        if (!d || !d.party) { setAccess(DEV_OPEN ? 'granted' : 'denied'); return }
         window.__PARTY__ = d.party
         window.__INVITADO__ = d.party.family
         setDataKey(d.party.id)
+        setRsvpRequired(d.party.rsvpRequired !== false)
         if (d.party.role === 'novios') setNoviosToken(token)
+        setAccess('granted')
       })
-      .catch((err) => console.error('[party] no se pudo resolver el token:', err))
+      .catch((err) => {
+        console.error('[party] no se pudo resolver el token:', err)
+        if (!cancel) setAccess(DEV_OPEN ? 'granted' : 'denied')
+      })
     return () => { cancel = true }
   }, [])
 
   // Scroll con GSAP: reveal-on-scroll (mismo fade+translateY y stagger que el
   // diseño) + parallax sutil en las imágenes con contenedor overflow:hidden.
   useGSAP(() => {
+    // Hasta que el token no está resuelto el sitio no existe en el DOM: si esto
+    // corriera antes, los `.reveal` quedarían en opacity:0 para siempre.
+    if (access !== 'granted') return
     document.documentElement.classList.add('js-gsap')
     const mm = gsap.matchMedia()
 
@@ -1174,7 +1333,9 @@ export default function WeddingApp() {
       clearTimeout(refresh)
       document.documentElement.classList.remove('js-gsap')
     }
-  }, [])
+  }, [access])
+
+  if (access !== 'granted') return <Gate state={access} />
 
   return (
     <>
@@ -1182,7 +1343,7 @@ export default function WeddingApp() {
       <AudioController />
       <NoviosButton token={noviosToken} />
       <div className="device">
-        <Nav />
+        <Nav rsvpRequired={rsvpRequired} />
         <Hero />
         <Night />
         <Boda />
@@ -1192,7 +1353,7 @@ export default function WeddingApp() {
         <Stay />
         <Gifts />
         <Values />
-        <Rsvp key={`rsvp-${dataKey}`} />
+        {rsvpRequired && <Rsvp key={`rsvp-${dataKey}`} />}
         <Footer />
       </div>
       <CatWalker />

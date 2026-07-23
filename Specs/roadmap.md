@@ -1,4 +1,17 @@
+
+
+1. Agregar nombres de cada adulto y niño que se agrega. Cambio visual primero 
+2. Seccion de mesas adicional en panel de novios. logica.
+3. Todo como infancias y no novios.
+4. Crear un efecto especial tal vez con un tono dorado para la carta de invitacion de las damas de honor y padrinos. Y un mensaje especial cuando confirmen
+5. Agregar boton para eliminar invitados o grupos. 
+6. 
+7. 
+
+
 # Roadmap — A&C Wedding
+
+
 
 Enfoque acordado con el cliente: **equilibrado por secciones**. Se avanza sección
 por sección (Hero → Nosotros/Night → Boda → Plan → Venue/Stay → Gifts → RSVP),
@@ -68,10 +81,23 @@ Cada fase debería caber en un PR pequeño hacia `develop`.
 
 ## Fase 4 — Mesa de regalos (Gifts)
 
-- [~] Copys y estilo de la sección `Gifts` (regalo en efectivo para luna de miel).
-- [ ] Enlaces reales: lista de regalos / transferencia / **sobre digital**.
-- [ ] Todos los enlaces salientes verificados. El **sobre digital** requiere
-      backend (ver Fase 5 y Stoppers).
+> **Decidido:** la **transferencia bancaria es la única opción** (no hay mesa de
+> regalos externa ni sobre digital con cobro en línea) y la sección es
+> **deliberadamente minimalista**: datos de la cuenta + botón de copiar, nada más.
+> El sitio queda tras token, así que los datos solo los ven los invitados.
+>
+> Se evaluó y **descartó** el cobro automático tipo Stripe/SPEI (CLABE dinámica +
+> webhook): es viable, pero para el volumen de una boda no compensa la comisión
+> por transacción, el alta con RFC ni convertir un regalo entre particulares en
+> ingreso vía procesador de pagos. También se descartó pedir el monto en el sitio.
+
+- [x] Copys y estilo de la sección `Gifts` (regalo en efectivo para luna de miel).
+- [x] **Datos bancarios** con botón *copiar* por campo, aislados en
+      `app/data/gifts.js` (banco, titular, CLABE, cuenta opcional, concepto).
+- [x] Sin barra de monto, sin botón de aviso, sin registro de aportaciones:
+      **la sección no tiene backend.**
+- [x] **Datos bancarios reales** — `app/data/gifts.js` tiene `TODO` de momento.
+      Es lo único que falta para cerrar la fase.
 
 ## Fase 5 — RSVP (backend)
 
@@ -101,19 +127,35 @@ Cada fase debería caber en un PR pequeño hacia `develop`.
       `invitado`), de modo que se puede emitir también la URL de los **novios**.
 - [x] **Correr las migraciones contra la BD de Hostinger** (`npm run migrate`) con
       las credenciales reales en `.env`. *Requiere credenciales + Remote MySQL.*
-- [ ] **Bloqueo total del sitio**: sin token válido, pantalla de acceso con una
-      **imagen** (a aportar por el cliente, `IMAGENES-PENDIENTES.md`); hoy el sitio
-      cae a un grupo de respaldo — falta el bloqueo real y la pantalla de acceso.
-- [ ] **Validación de aforo** (no exceder `seats_adults`/`seats_children`) y
-      estados de éxito/error visibles en el formulario.
-- [ ] **Export de la lista de enlaces** (CSV/copiar todo) desde el panel de novios
-      (hoy se copia enlace por enlace).
+- [x] **Bloqueo total del sitio**: sin token válido no se renderiza nada del sitio,
+      solo el componente `Gate`. **Decidido: pantalla de acceso tipográfica, sin
+      imagen** (misma paleta nocturna que el sobre) — así el punto no depende de
+      que el cliente entregue la foto. En desarrollo (`NODE_ENV !== 'production'`)
+      el sitio se abre sin token para poder trabajar en local.
+      *Nota:* es un cierre de cara al invitado, no una barrera criptográfica —
+      quien tenga un token válido descarga todo el bundle (incluidos los datos
+      bancarios de `app/data/gifts.js`).
+- [x] **Validación de aforo** (`checkCapacity` en `lib/repo.js`): se valida dentro
+      de la transacción antes de escribir, `POST /api/rsvp` responde **409** con el
+      mensaje ya redactado, y el formulario lo pre-valida y muestra el aviso
+      (`.rsvp-alert`). El botón pasa a *Enviando…* y **la animación de éxito solo
+      se dispara si el backend aceptó** (antes se celebraba de forma optimista y un
+      fallo dejaba al invitado creyendo que había confirmado).
+      *Convención:* un límite en `0` = "sin límite declarado" y no se aplica, para
+      no bloquear a los grupos dados de alta antes de esta fase.
+      Verificado end-to-end: 3 asistentes con aforo 2 → 409 con rollback limpio
+      (sin escritura parcial); 2 asistentes → 200.
+- [x] **Export de la lista de enlaces** desde el panel de novios: botón
+      **Exportar CSV** (con BOM para que Excel respete los acentos) y **Copiar
+      todos los enlaces**.
 - [ ] Definir el **alcance de la vista de proveedores** (rol `proveedor` ya existe).
+      **Movido a Fase 6:** el rol existe en la BD y hoy ve el sitio como invitado.
+      Se define cuando se sepa qué proveedores hay y qué necesita cada uno.
 
 ## Fase 6 — Valores, cierre y pulido
 
-- [ ] Sección `Values` con contenido final.
-- [ ] `Footer` con datos de contacto/agradecimiento.
+- [x] Sección `Values` con contenido final.
+- [x] `Footer` con datos de contacto/agradecimiento.
 - [~] Revisar animación del gato (`CatWalker`) en todas las secciones:
   - [x] El gato **solo mueve las patas mientras camina** (al hacer scroll); en
         reposo queda de pie (cola y parpadeo siguen).
@@ -130,7 +172,6 @@ Cada fase debería caber en un PR pequeño hacia `develop`.
 - [ ] SEO/social: `<title>`, meta y tarjeta al compartir el enlace.
 - [ ] QA end-to-end del RSVP en producción.
 - [ ] Compartir el enlace final con los invitados.
-
 ---
 
 ### NOTAS DE ERRORES
@@ -162,10 +203,10 @@ Reúne en tareas accionables lo que estaba disperso en *Stoppers*, *Next steps* 
 **Backend / datos (Fase 5)**
 - [ ] Correr `npm run migrate` contra Hostinger con credenciales reales en `.env`
       (habilitar *Remote MySQL* si se corre desde fuera del servidor).
-- [ ] **Bloqueo total por token** + pantalla de acceso (necesita imagen del cliente).
-- [ ] Validación de **aforo** (`seats_adults`/`seats_children`) y estados éxito/error.
-- [ ] **Export de enlaces** (CSV / copiar todo) en el panel de novios.
-- [ ] Definir **alcance de la vista de proveedores** (rol `proveedor`).
+- [x] **Bloqueo total por token** + pantalla de acceso (tipográfica, sin imagen).
+- [x] Validación de **aforo** (`seats_adults`/`seats_children`) y estados éxito/error.
+- [x] **Export de enlaces** (CSV / copiar todo) en el panel de novios.
+- [ ] Definir **alcance de la vista de proveedores** (rol `proveedor`) → Fase 6.
 - [ ] Decidir `?i=<token>` vs. ruta `/i/<token>` (por ahora se mantiene query param).
 
 **Contenido y copy**
@@ -175,8 +216,7 @@ Reúne en tareas accionables lo que estaba disperso en *Stoppers*, *Next steps* 
 - [ ] `Footer` con datos de contacto/agradecimiento (Fase 6).
 
 **Regalos (Fase 4)**
-- [ ] Enlaces reales: lista de regalos / transferencia / **sobre digital**
-      (el sobre digital puede requerir backend).
+- [ ] **Datos bancarios reales** en `app/data/gifts.js` (hoy `TODO`).
 
 **Logística (Fase 3)**
 - [ ] Fijar **casas de Airbnb concretas** (hoy son búsquedas por zona).
@@ -201,7 +241,11 @@ Reúne en tareas accionables lo que estaba disperso en *Stoppers*, *Next steps* 
 2. **Capa de datos.** ✅ Resuelto: **MySQL gestionada en Hostinger + Route Handlers
    con `mysql2`** (sin ORM), migraciones SQL versionadas. Ver `schema_database.md`.
 3. **Roles y vistas.** Parcial: existen **novios / proveedor / invitado**; novios
-   con panel `/novios` implementado. Falta definir el **alcance de proveedores**.
+   con panel `/novios` implementado. El **alcance de proveedores** se pospone a
+   Fase 6 (hoy `proveedor` entra y ve el sitio como un invitado más).
+5. **Pantalla de acceso.** ✅ Resuelto: **tipográfica, sin imagen**, para no
+   depender de un asset del cliente. Si más adelante llega la foto, se añade
+   dentro de `Gate` sin tocar la lógica de bloqueo.
 4. **`?i=<token>` vs. `/i/<token>`.** Se mantiene el query param salvo necesidad.
 
 
@@ -209,5 +253,5 @@ Reúne en tareas accionables lo que estaba disperso en *Stoppers*, *Next steps* 
 
 
 
-
+IsXo9315$$$
 

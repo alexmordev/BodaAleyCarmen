@@ -40,6 +40,9 @@ h2 em{font-style:italic; color:var(--lila);}
 .hero h1 em{font-style:italic; color:var(--lila);}
 .hero .sub{font-family:'Cormorant Garamond',serif; font-style:italic; font-size:21px; color:var(--ink-soft); margin-top:22px; line-height:1.35;}
 .heroimg{position:relative; height:400px; margin-top:30px; border-radius:4px 4px 90px 4px; overflow:hidden;}
+/* <picture> envuelve la img del hero (recorte distinto en móvil): debe ser
+   bloque y llenar la caja para que el height:100% de la img resuelva bien. */
+.heroimg picture{display:block; width:100%; height:100%;}
 .heroimg img{width:100%; height:100%; object-fit:cover;}
 .heroimg .cap{position:absolute; bottom:14px; left:14px; background:rgba(247,244,239,0.92); color:var(--ink-soft);
   font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:0.12em; text-transform:uppercase; padding:6px 11px; border-radius:20px;}
@@ -128,6 +131,20 @@ h2 em{font-style:italic; color:var(--lila);}
 .gifts .money .ic{width:44px; height:44px; margin:0 auto 14px; border-radius:50%; background:var(--ivory-2); display:flex; align-items:center; justify-content:center; color:var(--lila);}
 .gifts .money p{font-size:13px; line-height:1.65; color:var(--ink-soft);}
 .gifts .money b{color:var(--ink);}
+
+/* --- Datos bancarios (Fase 4). Minimalista: el dato y su botón de copiar. --- */
+.bank{margin-top:22px; border:1px solid var(--line); border-radius:8px; padding:22px; text-align:left;}
+.bank-title{font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:0.2em; text-transform:uppercase;
+  color:var(--lila); margin-bottom:14px;}
+.bank-row{display:flex; flex-direction:column; gap:3px; padding:9px 0; border-bottom:1px solid var(--ivory-2);}
+.bank-row:last-child{border-bottom:none;}
+.bank-label{font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:0.14em; text-transform:uppercase; color:var(--ink-soft);}
+.bank-value{display:flex; align-items:center; justify-content:space-between; gap:12px;}
+.bank-value span{font-size:13px; color:var(--ink); word-break:break-all;}
+.bank-copy{flex:none; background:none; border:1px solid var(--line); border-radius:4px; cursor:pointer;
+  font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:0.12em; text-transform:uppercase;
+  color:var(--lila); padding:5px 9px; transition:background .2s, border-color .2s;}
+.bank-copy:hover{background:var(--ivory-2); border-color:var(--lila);}
 
 /* ===== VALORES (con peso) ===== */
 .values{background:var(--nbg); color:var(--nink); text-align:center; padding:88px 26px; overflow:hidden;}
@@ -642,6 +659,7 @@ body.modal-open{overflow:hidden;}
 .np-msg,.np-error,.np-result{font-size:13px; line-height:1.6;}
 .np-error{color:#a23; background:rgba(170,34,51,.08); padding:10px 14px; border-radius:10px;}
 .np-result{margin-top:12px; color:var(--ink-soft);}
+.np-muted{font-size:12px; color:var(--ink-soft); margin:-4px 0 10px;}
 .np-result code,.np-table code{font-family:'JetBrains Mono',monospace; font-size:11px; background:rgba(138,111,184,.1); padding:2px 6px; border-radius:5px; word-break:break-all;}
 
 .np-cards{display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-bottom:26px;}
@@ -681,3 +699,36 @@ body.modal-open{overflow:hidden;}
 @media(min-width:640px){
   .np-cards{grid-template-columns:repeat(4,1fr);}
 }
+
+/* ===== PANTALLA DE ACCESO (bloqueo por token) =====
+   Sin ?i=<token> válido el sitio no se renderiza. Deliberadamente tipográfica:
+   misma paleta y familias que el sobre (Opener), sin foto. */
+.gate{position:fixed; inset:0; z-index:200; display:flex; align-items:center; justify-content:center;
+  padding:32px 24px; background:var(--nbg); color:var(--nink); overflow:hidden;}
+.gate-halo{position:absolute; width:min(760px,150vw); aspect-ratio:1; border-radius:50%; pointer-events:none;
+  background:radial-gradient(circle, rgba(183,155,222,0.20) 0%, rgba(183,155,222,0) 68%);}
+.gate-card{position:relative; text-align:center; max-width:400px;}
+.gate-kicker{font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:0.32em; text-transform:uppercase;
+  color:var(--nmuted); margin-bottom:22px;}
+.gate-lg{font-family:'Cormorant Garamond',serif; font-weight:400; font-size:clamp(38px,11vw,50px); line-height:1.05;}
+.gate-lg .amp{font-style:italic; color:var(--nlila);}
+.gate-rule{width:44px; height:1px; background:var(--nline); margin:26px auto;}
+.gate-msg{font-family:'Cormorant Garamond',serif; font-size:22px; line-height:1.4; color:var(--nink);}
+.gate-msg em{font-style:italic; color:var(--nlila);}
+.gate-sub{font-size:13.5px; line-height:1.75; color:var(--nink-soft); margin-top:16px;}
+.gate-fine{font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:0.18em; text-transform:uppercase;
+  color:var(--nmuted); margin-top:34px;}
+
+/* Aviso de error del RSVP (aforo excedido, fallo de red). */
+.rsvp-alert{display:flex; align-items:flex-start; gap:9px; text-align:left; margin-bottom:14px;
+  background:rgba(178,58,72,0.07); border:1px solid rgba(178,58,72,0.28); border-radius:10px;
+  padding:11px 13px; font-size:12.5px; line-height:1.55; color:#8C2E3A;}
+.rsvp-alert svg{width:16px; height:16px; flex:0 0 auto; margin-top:1px;}
+.rsvp-dialog-foot .btn:disabled{opacity:0.55; cursor:not-allowed;}
+
+/* Cabecera de sección del panel con acciones a la derecha (export CSV). */
+.np-section-head{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:12px;}
+.np-section-head h2{margin-bottom:0;}
+.np-actions{display:flex; gap:8px; flex-wrap:wrap;}
+.np-btn.ghost{background:transparent; color:var(--lila-deep); border:1px solid var(--line);}
+.np-btn.ghost:hover{background:#fff; border-color:var(--lila);}

@@ -18,6 +18,9 @@ Thumbs.db
 .idea/
 .obsidian/
 
+# Worktrees anidados
+/firstTree/
+
 # Herramientas locales / notas (no van al repo)
 .agents/
 Spec/

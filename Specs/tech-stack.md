@@ -133,6 +133,13 @@ apunta a ella.
 - **invitado** — RSVP estándar.
 - **proveedor** — existe el rol; **alcance de su vista pendiente de definir**.
 
+> **RSVP por rol (sin flag).** Solo confirman los invitados (y un futuro rol de
+> padrinos/damas de honor). Los roles `novios` y `proveedor` están **exentos**: no
+> ven el formulario ni cuentan en las estadísticas. La regla es la fuente de
+> verdad `rsvpRequiredForRole(role)` en `lib/repo.js` (exentos = `novios`,
+> `proveedor`; el resto confirma por defecto), reflejada en el payload de
+> `/api/party` (`rsvpRequired`) y validada de nuevo en `/api/rsvp` (`403 NO_RSVP`).
+
 El **log de ingresos** vive en `access_logs` (un registro por apertura de enlace,
 incluidos intentos con token inválido) y alimenta el panel de novios.
 
