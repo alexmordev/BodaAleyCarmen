@@ -95,32 +95,53 @@ export default function NoviosPanel() {
     return m
   }, [data])
 
+  // RSVP por persona, espejo del formulario: attending 1=asiste, 0=no, null=sin
+  // responder. Los roles exentos (novios/proveedor) no confirman -> 'na'.
+  const personRsvp = (role, attending) => {
+    if (!requiresRsvp(role)) return 'na'
+    return attending === 1 ? 'yes' : attending === 0 ? 'no' : 'pend'
+  }
+
   const families = useMemo(() => {
     if (!guests) return []
     return guests.map((g) => {
       const s = summaryById.get(g.id) || {}
       const named = (g.members || []).filter((m) => m.name && m.name.trim())
-      const adults = named.filter((m) => m.type !== 'menor').length
-      const children = named.filter((m) => m.type === 'menor').length
-      let rsvp = 'na'
-      if (requiresRsvp(g.role)) {
-        if (!g.confirmed) rsvp = 'pend'
-        else rsvp = named.some((m) => m.attending === 1) || (g.members || []).some((m) => m.plus_one_attending === 1) ? 'yes' : 'no'
-      }
       return {
         id: g.id, group: g.family, role: g.role, link: g.link,
-        people: named.map((m) => ({ id: m.id, name: m.name, kind: m.type === 'menor' ? 'child' : 'adult', table_id: m.table_id || null })),
-        adults, children, rsvp,
+        people: named.map((m) => ({
+          id: m.id, name: m.name, kind: m.type === 'menor' ? 'child' : 'adult',
+          table_id: m.table_id || null, attending: m.attending, diet: m.diet,
+        })),
+        // El +1 vive en el principal; solo cuenta cuando fue activado (attending=1).
+        plusOnes: named
+          .filter((m) => m.plus_one_name && m.plus_one_attending === 1)
+          .map((m) => ({ name: m.plus_one_name, diet: m.plus_one_diet })),
         visits: s.visitas || 0,
         first: fmt(s.primer_ingreso), last: fmt(s.ultimo_ingreso),
       }
     })
   }, [guests, summaryById])
 
+  // allPeople: miembros reales (para las mesas: tienen id y pueden sentarse).
   const allPeople = useMemo(
     () => families.flatMap((f) => f.people.map((p) => ({ ...p, fam: f }))),
     [families],
   )
+
+  // peopleRows: una fila por invitado (incluye los +1) para el resumen.
+  const peopleRows = useMemo(() => families.flatMap((f) => {
+    const rows = f.people.map((p) => ({
+      key: p.id, name: p.name, group: f.group, role: f.role, kind: p.kind,
+      rsvp: personRsvp(f.role, p.attending), diet: p.diet, last: f.last, link: f.link, isPlus: false,
+    }))
+    const plusRows = f.plusOnes.map((po, i) => ({
+      key: `${f.id}-plus-${i}`, name: po.name, group: f.group, role: f.role, kind: 'adult',
+      rsvp: requiresRsvp(f.role) ? 'yes' : 'na', diet: po.diet, last: f.last, link: f.link, isPlus: true,
+    }))
+    return [...rows, ...plusRows]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [families])
 
   const stats = data?.stats
   const people = stats?.people || {}
@@ -129,15 +150,15 @@ export default function NoviosPanel() {
   const grpN = Number(groups.grupos_confirmados || 0)
   const grpT = Number(groups.grupos || 0)
 
-  // --- Filtro / búsqueda ---------------------------------------------------
-  const shown = useMemo(() => families.filter((f) => {
-    if (filter !== 'all' && f.rsvp !== filter) return false
+  // --- Filtro / búsqueda (por invitado) ------------------------------------
+  const shown = useMemo(() => peopleRows.filter((p) => {
+    if (filter !== 'all' && p.rsvp !== filter) return false
     if (query) {
-      const hay = (f.group + ' ' + f.people.map((p) => p.name).join(' ')).toLowerCase()
+      const hay = (p.name + ' ' + p.group).toLowerCase()
       if (!hay.includes(query)) return false
     }
     return true
-  }), [families, filter, query])
+  }), [peopleRows, filter, query])
 
   // --- Acciones ------------------------------------------------------------
   const copy = async (text, label = 'Enlace copiado al portapapeles') => {
@@ -217,19 +238,19 @@ export default function NoviosPanel() {
         </div>
       </div>
 
-      {/* FAMILIES */}
+      {/* GUESTS (por invitado) */}
       <section className="card">
         <div className="sec-head">
           <div>
-            <h2>Resumen por familia</h2>
-            <div className="desc">Accesos y estado de confirmación de cada grupo.</div>
+            <h2>Resumen por invitado</h2>
+            <div className="desc">Estado de confirmación de cada persona (dentro de un grupo unos asisten y otros no).</div>
           </div>
-          <div className="side"><span className="chip">{families.length} grupos</span></div>
+          <div className="side"><span className="chip">{peopleRows.length} invitados</span></div>
         </div>
         <div className="toolbar">
           <div className="search">
             <IcoSearch />
-            <input type="search" value={query} onChange={(e) => setQuery(e.target.value.trim().toLowerCase())} placeholder="Buscar familia o invitado…" />
+            <input type="search" value={query} onChange={(e) => setQuery(e.target.value.trim().toLowerCase())} placeholder="Buscar invitado o grupo…" />
           </div>
           <div className="filters">
             {[['all', 'Todos'], ['yes', 'Asisten'], ['pend', 'Sin resp.'], ['no', 'No asisten']].map(([f, lbl]) => (
@@ -242,7 +263,7 @@ export default function NoviosPanel() {
         <div className="flist">
           {shown.length === 0
             ? <div className="empty"><span className="serif">Sin resultados</span>Prueba con otro filtro o búsqueda.</div>
-            : shown.map((f) => <FamilyCard key={f.id} f={f} onCopy={copy} />)}
+            : shown.map((p) => <PersonCard key={p.key} p={p} onCopy={copy} />)}
         </div>
 
         {/* desktop table */}
@@ -250,21 +271,20 @@ export default function NoviosPanel() {
           <div className="twrap">
             <table className="data">
               <thead><tr>
-                <th>Grupo</th><th>Rol</th><th>Personas</th><th>Accesos</th><th>Primer ingreso</th><th>Último ingreso</th><th>RSVP</th><th></th>
+                <th>Invitado</th><th>Grupo</th><th>Rol</th><th>Tipo</th><th>Dieta</th><th>RSVP</th><th></th>
               </tr></thead>
               <tbody>
                 {shown.length === 0
-                  ? <tr><td colSpan={8} className="empty" style={{ textAlign: 'center' }}>Sin resultados</td></tr>
-                  : shown.map((f) => (
-                    <tr key={f.id}>
-                      <td className="name">{f.group}</td>
-                      <td><RoleBadge role={f.role} /></td>
-                      <td>{f.people.length} <span className="dim">({f.adults}A·{f.children}I)</span></td>
-                      <td className={f.visits ? '' : 'dim'}>{f.visits}</td>
-                      <td className={f.first ? '' : 'dim'}>{f.first || '—'}</td>
-                      <td className={f.last ? '' : 'dim'}>{f.last || '—'}</td>
-                      <td><RsvpBadge r={f.rsvp} /></td>
-                      <td><button className="mini" onClick={() => copy(f.link)}><IcoCopy />Enlace</button></td>
+                  ? <tr><td colSpan={7} className="empty" style={{ textAlign: 'center' }}>Sin resultados</td></tr>
+                  : shown.map((p) => (
+                    <tr key={p.key}>
+                      <td className="name">{p.name}{p.isPlus && <span className="kbadge adult" style={{ marginLeft: 8 }}>+1</span>}</td>
+                      <td>{p.group}</td>
+                      <td><RoleBadge role={p.role} /></td>
+                      <td><span className={`kbadge ${p.kind}`}>{p.kind === 'child' ? 'Infancia' : 'Adulto'}</span></td>
+                      <td className={p.diet ? '' : 'dim'}>{p.diet || '—'}</td>
+                      <td><RsvpBadge r={p.rsvp} /></td>
+                      <td><button className="mini" onClick={() => copy(p.link)}><IcoCopy />Enlace</button></td>
                     </tr>
                   ))}
               </tbody>
@@ -379,20 +399,24 @@ function RsvpBadge({ r }) {
   return <span className={`rsvp ${r}`}><span className="d" />{RSVP_LABEL[r]}</span>
 }
 
-function FamilyCard({ f, onCopy }) {
+function PersonCard({ p, onCopy }) {
   return (
     <div className="fam">
       <div className="fam-top">
-        <div className="fam-name">{f.group} <RoleBadge role={f.role} /></div>
-        <RsvpBadge r={f.rsvp} />
+        <div className="fam-name">
+          {p.name}
+          <span className={`kbadge ${p.kind}`}>{p.kind === 'child' ? 'Infancia' : 'Adulto'}</span>
+          {p.isPlus && <span className="kbadge adult">+1</span>}
+        </div>
+        <RsvpBadge r={p.rsvp} />
       </div>
       <div className="fam-meta">
-        <div className="m"><div className="ml">Personas</div><div className="mv">{f.people.length} <span className="dim">({f.adults}A · {f.children}I)</span></div></div>
-        <div className="m"><div className="ml">Accesos</div><div className={`mv ${f.visits ? '' : 'dim'}`}>{f.visits}</div></div>
-        <div className="m"><div className="ml">Último ingreso</div><div className={`mv ${f.last ? '' : 'dim'}`}>{f.last || '—'}</div></div>
+        <div className="m"><div className="ml">Grupo</div><div className="mv">{p.group}</div></div>
+        <div className="m"><div className="ml">Rol</div><div className="mv"><RoleBadge role={p.role} /></div></div>
+        {p.diet ? <div className="m"><div className="ml">Dieta</div><div className="mv">{p.diet}</div></div> : null}
       </div>
       <div className="fam-actions">
-        <button className="mini" onClick={() => onCopy(f.link)}><IcoCopy />Copiar enlace</button>
+        <button className="mini" onClick={() => onCopy(p.link)}><IcoCopy />Copiar enlace</button>
       </div>
     </div>
   )

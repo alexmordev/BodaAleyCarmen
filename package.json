@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "prestart": "node scripts/migrate.mjs",
     "start": "next start",
     "lint": "next lint",
     "migrate": "node scripts/migrate.mjs",

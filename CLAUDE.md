@@ -63,6 +63,13 @@ estáticos). El despliegue lo hace Hostinger desde su **integración Git**: clon
 repo, ejecuta `npm install` + `npm run build` y arranca la app con
 `npm run start` (`next start`).
 
+> **Migraciones automáticas en el arranque.** `package.json` tiene un `prestart`
+> (`node scripts/migrate.mjs`) que npm ejecuta **antes** de `next start`. Así, cada
+> vez que Hostinger arranca/reinicia la app, aplica las migraciones SQL pendientes
+> contra la MySQL de producción (idempotente: si no hay pendientes, no hace nada).
+> El CI solo corre `build`, así que no necesita BD. **Tras un cambio de esquema,
+> basta con redeploy/restart en Hostinger para que el esquema de prod se actualice.**
+
 - **CI (`.github/workflows/deploy.yml`):** solo valida que `next build` compila en
   cada push (`main` y `develop`). **No publica** ninguna rama; el deploy lo
   gestiona Hostinger.
